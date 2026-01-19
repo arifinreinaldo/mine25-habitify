@@ -221,17 +221,25 @@ CREATE POLICY "Users can CRUD own completions" ON completions FOR ALL USING (aut
    - Triggered: Cron job (user's timezone, e.g., 7 AM)
    - Content: Today's habits list, yesterday's completion rate
 
-3. **Reminder Email**
-   - Triggered: Based on habit reminder_time
-   - Content: Specific habit reminder
+3. **Reminder Email & Push Notification (Context-Aware)**
+   - Triggered: Based on habit reminder_time + AI optimization
+   - Content: Specific habit reminder but with variable wording (humorous, guilt-tripping, encouraging).
+   - "Don't let your streak die!"
+   - "It's been 3 days, do you still want to learn Spanish?" (Context: Habit name)
 
-4. **End-of-Day Nudge**
-   - Triggered: Cron job (e.g., 8 PM)
+4. **End-of-Day Nudge (The "Butt Dial")**
+   - Triggered: Cron job (e.g., 8 PM) if habits are incomplete
    - Content: Incomplete habits for today
 
-5. **Streak Milestone**
+5. **Streak Milestone & Saver**
    - Triggered: On completion (7, 30, 100 days)
-   - Content: Congratulations message
+   - Content: Congratulations or "Streak Freeze used" alerts.
+
+### Notification Strategy (Duolingo Style)
+- **Bandit Algorithm (Simplified)**: Randomly select from a pool of message templates (Aggressive, Encouraging, Neutral) and track open rates to optimize for the user.
+- **Novelty**: Ensure the same message isn't sent twice in a row.
+- **Context Awareness**: Mention the specific habit name and the current streak count.
+- **Humor & Guilt**: Use "Passive Aggressive" tones for users who respond well to it.
 
 ### Email Service Setup
 
