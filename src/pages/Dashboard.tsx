@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../features/auth/AuthContext';
-import { CreateHabitDialog } from '../components/habits/CreateHabitDialog';
+import { HabitDialog } from '../components/habits/HabitDialog';
 import { HabitList } from '../components/habits/HabitList';
-import { Habit, TimeOfDay } from '../types/habit';
+import type { Habit } from '../types/habit';
 import { format } from 'date-fns';
-import { Loader2, LogOut } from 'lucide-react';
+import { Loader2, LogOut, Plus } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,6 +15,8 @@ export default function Dashboard() {
     const [habits, setHabits] = useState<Habit[]>([]);
     const [completedIds, setCompletedIds] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
 
     const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -54,18 +56,33 @@ export default function Dashboard() {
         }
     };
 
-    const handleCreateHabit = async (newHabit: Partial<Habit>) => {
+    const handleSaveHabit = async (habitData: Partial<Habit>) => {
         try {
-            const { data, error } = await supabase
-                .from('habits')
-                .insert([{ ...newHabit, user_id: user!.id }])
-                .select()
-                .single();
+            if (editingHabit) {
+                // Update existing
+                const { data, error } = await supabase
+                    .from('habits')
+                    .update(habitData)
+                    .eq('id', editingHabit.id)
+                    .select()
+                    .single();
 
-            if (error) throw error;
-            setHabits([...habits, data]);
+                if (error) throw error;
+                setHabits(prev => prev.map(h => h.id === editingHabit.id ? data : h));
+            } else {
+                // Create new
+                const { data, error } = await supabase
+                    .from('habits')
+                    .insert([{ ...habitData, user_id: user!.id }])
+                    .select()
+                    .single();
+
+                if (error) throw error;
+                setHabits([...habits, data]);
+            }
+            setIsDialogOpen(false);
         } catch (error) {
-            console.error('Error creating habit:', error);
+            console.error('Error saving habit:', error);
         }
     };
 
@@ -126,7 +143,8 @@ export default function Dashboard() {
     };
 
     const handleEditHabit = (habit: Habit) => {
-        console.log('Edit not implemented yet', habit);
+        setEditingHabit(habit);
+        setIsDialogOpen(true);
     };
 
     const handleSignOut = async () => {
@@ -134,7 +152,7 @@ export default function Dashboard() {
         navigate('/login');
     };
 
-    const filterHabits = (time: TimeOfDay) => habits.filter(h => h.time_of_day === time || h.time_of_day === 'anytime');
+
 
     if (loading) {
         return <div className="min-h-screen bg-background flex items-center justify-center"><Loader2 className="animate-spin text-primary" /></div>;
@@ -217,8 +235,23 @@ export default function Dashboard() {
 
             {/* Floating Action Button */}
             <div className="fixed bottom-6 right-6">
-                <CreateHabitDialog onSave={handleCreateHabit} />
+                <Button
+                    className="gap-2 shadow-lg shadow-primary/20"
+                    onClick={() => {
+                        setEditingHabit(null);
+                        setIsDialogOpen(true);
+                    }}
+                >
+                    <Plus className="h-4 w-4" /> New Habit
+                </Button>
             </div>
+
+            <HabitDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                onSave={handleSaveHabit}
+                habitToEdit={editingHabit || undefined}
+            />
         </div>
     );
 }

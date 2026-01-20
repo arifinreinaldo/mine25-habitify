@@ -1,23 +1,38 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Plus } from 'lucide-react';
 import type { Habit, TimeOfDay } from '../../types/habit';
 
-interface CreateHabitDialogProps {
+interface HabitDialogProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
     onSave: (habit: Partial<Habit>) => Promise<void>;
+    habitToEdit?: Habit;
 }
 
-export const CreateHabitDialog: React.FC<CreateHabitDialogProps> = ({ onSave }) => {
-    const [open, setOpen] = useState(false);
+export const HabitDialog: React.FC<HabitDialogProps> = ({ open, onOpenChange, onSave, habitToEdit }) => {
     const [loading, setLoading] = useState(false);
     const [name, setName] = useState('');
     const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('anytime');
     const [icon, setIcon] = useState('📝');
     const [color, setColor] = useState('#6366f1');
+
+    React.useEffect(() => {
+        if (habitToEdit) {
+            setName(habitToEdit.name);
+            setTimeOfDay(habitToEdit.time_of_day);
+            setIcon(habitToEdit.icon);
+            setColor(habitToEdit.color);
+        } else {
+            setName('');
+            setTimeOfDay('anytime');
+            setIcon('📝');
+            setColor('#6366f1');
+        }
+    }, [habitToEdit, open]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -31,7 +46,7 @@ export const CreateHabitDialog: React.FC<CreateHabitDialogProps> = ({ onSave }) 
                 frequency_type: 'daily', // Default for MVP
                 frequency_days: [0, 1, 2, 3, 4, 5, 6],
             });
-            setOpen(false);
+            onOpenChange(false);
             setName('');
         } catch (error) {
             console.error(error);
@@ -52,15 +67,10 @@ export const CreateHabitDialog: React.FC<CreateHabitDialogProps> = ({ onSave }) 
     const icons = ['📝', '💧', '🏃', '🧘', '📚', '💊', '💰', '🧹'];
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button className="gap-2 shadow-lg shadow-primary/20">
-                    <Plus className="h-4 w-4" /> New Habit
-                </Button>
-            </DialogTrigger>
+        <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Create New Habit</DialogTitle>
+                    <DialogTitle>{habitToEdit ? 'Edit Habit' : 'Create New Habit'}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="grid gap-4 py-4">
                     <div className="grid gap-2">
@@ -125,7 +135,7 @@ export const CreateHabitDialog: React.FC<CreateHabitDialogProps> = ({ onSave }) 
 
                     <DialogFooter>
                         <Button type="submit" disabled={loading}>
-                            {loading ? 'Creating...' : 'Create Habit'}
+                            {loading ? 'Saving...' : (habitToEdit ? 'Save Changes' : 'Create Habit')}
                         </Button>
                     </DialogFooter>
                 </form>
