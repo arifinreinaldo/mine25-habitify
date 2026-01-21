@@ -190,7 +190,16 @@ export default function Dashboard() {
                 {/* Habit Sections */}
                 <div className="space-y-8">
                     <HabitList
-                        title="Morning"
+                        title="🌅 Early Morning"
+                        habits={habits.filter(h => h.time_of_day === 'early_morning')}
+                        completedHabitIds={completedIds}
+                        onToggle={handleToggleHabit}
+                        onDelete={handleDeleteHabit}
+                        onEdit={handleEditHabit}
+                    />
+
+                    <HabitList
+                        title="☀️ Morning"
                         habits={habits.filter(h => h.time_of_day === 'morning')}
                         completedHabitIds={completedIds}
                         onToggle={handleToggleHabit}
@@ -199,7 +208,7 @@ export default function Dashboard() {
                     />
 
                     <HabitList
-                        title="Afternoon"
+                        title="🌤️ Afternoon"
                         habits={habits.filter(h => h.time_of_day === 'afternoon')}
                         completedHabitIds={completedIds}
                         onToggle={handleToggleHabit}
@@ -208,7 +217,7 @@ export default function Dashboard() {
                     />
 
                     <HabitList
-                        title="Evening"
+                        title="🌆 Evening"
                         habits={habits.filter(h => h.time_of_day === 'evening')}
                         completedHabitIds={completedIds}
                         onToggle={handleToggleHabit}
@@ -217,7 +226,16 @@ export default function Dashboard() {
                     />
 
                     <HabitList
-                        title="Anytime"
+                        title="⏰ Custom"
+                        habits={habits.filter(h => h.time_of_day === 'custom')}
+                        completedHabitIds={completedIds}
+                        onToggle={handleToggleHabit}
+                        onDelete={handleDeleteHabit}
+                        onEdit={handleEditHabit}
+                    />
+
+                    <HabitList
+                        title="🚫 No Reminder"
                         habits={habits.filter(h => h.time_of_day === 'anytime')}
                         completedHabitIds={completedIds}
                         onToggle={handleToggleHabit}
