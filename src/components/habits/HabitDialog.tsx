@@ -19,6 +19,7 @@ export const HabitDialog: React.FC<HabitDialogProps> = ({ open, onOpenChange, on
     const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('anytime');
     const [icon, setIcon] = useState('📝');
     const [color, setColor] = useState('#6366f1');
+    const [reminderTime, setReminderTime] = useState<string>('');
 
     React.useEffect(() => {
         if (habitToEdit) {
@@ -26,11 +27,13 @@ export const HabitDialog: React.FC<HabitDialogProps> = ({ open, onOpenChange, on
             setTimeOfDay(habitToEdit.time_of_day);
             setIcon(habitToEdit.icon);
             setColor(habitToEdit.color);
+            setReminderTime(habitToEdit.reminder_time || '');
         } else {
             setName('');
             setTimeOfDay('anytime');
             setIcon('📝');
             setColor('#6366f1');
+            setReminderTime('');
         }
     }, [habitToEdit, open]);
 
@@ -45,6 +48,7 @@ export const HabitDialog: React.FC<HabitDialogProps> = ({ open, onOpenChange, on
                 color,
                 frequency_type: 'daily', // Default for MVP
                 frequency_days: [0, 1, 2, 3, 4, 5, 6],
+                reminder_time: reminderTime || undefined,
             });
             onOpenChange(false);
             setName('');
@@ -131,6 +135,31 @@ export const HabitDialog: React.FC<HabitDialogProps> = ({ open, onOpenChange, on
                                 </button>
                             ))}
                         </div>
+                    </div>
+
+                    <div className="grid gap-2">
+                        <Label htmlFor="reminder">Email Reminder</Label>
+                        <div className="flex items-center gap-2">
+                            <Input
+                                id="reminder"
+                                type="time"
+                                value={reminderTime}
+                                onChange={(e) => setReminderTime(e.target.value)}
+                                className="w-32"
+                            />
+                            {reminderTime && (
+                                <button
+                                    type="button"
+                                    onClick={() => setReminderTime('')}
+                                    className="text-muted-foreground hover:text-foreground text-sm"
+                                >
+                                    Clear
+                                </button>
+                            )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            Get a passive-aggressive reminder if you haven't completed this habit
+                        </p>
                     </div>
 
                     <DialogFooter>
