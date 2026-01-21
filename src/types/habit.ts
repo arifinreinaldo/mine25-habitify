@@ -1,4 +1,4 @@
-export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'night' | 'anytime';
+export type TimeOfDay = 'early_morning' | 'morning' | 'afternoon' | 'evening' | 'custom' | 'anytime';
 export type FrequencyType = 'daily' | 'weekly' | 'custom';
 
 export interface Habit {

@@ -9,7 +9,7 @@ CREATE TABLE habits (
   description TEXT,
   icon TEXT DEFAULT '📝',
   color TEXT DEFAULT '#6366f1',
-  time_of_day TEXT DEFAULT 'anytime' CHECK (time_of_day IN ('morning', 'afternoon', 'evening', 'night', 'anytime')),
+  time_of_day TEXT DEFAULT 'anytime' CHECK (time_of_day IN ('early_morning', 'morning', 'afternoon', 'evening', 'custom', 'anytime')),
   frequency_type TEXT DEFAULT 'daily' CHECK (frequency_type IN ('daily', 'weekly', 'custom')),
   frequency_days INTEGER[] DEFAULT '{0,1,2,3,4,5,6}',
   frequency_target INTEGER,
