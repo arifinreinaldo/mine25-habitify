@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import type { Habit, TimeOfDay } from '../../types/habit';
+import type { Habit, TimeOfDay, FrequencyType, HabitType } from '../../types/habit';
 
 interface HabitDialogProps {
     open: boolean;
@@ -25,17 +25,47 @@ const timeOptions: { value: TimeOfDay; label: string; time: string; emoji: strin
 export const HabitDialog: React.FC<HabitDialogProps> = ({ open, onOpenChange, onSave, habitToEdit }) => {
     const [loading, setLoading] = useState(false);
     const [name, setName] = useState('');
+    const [description, setDescription] = useState('');
     const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('anytime');
     const [icon, setIcon] = useState('📝');
     const [color, setColor] = useState('#6366f1');
     const [customTime, setCustomTime] = useState<string>('09:00');
+    const [frequencyDays, setFrequencyDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
+    const [frequencyType, setFrequencyType] = useState<FrequencyType>('daily');
+    const [frequencyTarget, setFrequencyTarget] = useState<number>(1);
+    const [habitType, setHabitType] = useState<HabitType>('boolean');
+    const [unit, setUnit] = useState<string>('');
+
+    const weekdays = [
+        { value: 0, label: 'Sun' },
+        { value: 1, label: 'Mon' },
+        { value: 2, label: 'Tue' },
+        { value: 3, label: 'Wed' },
+        { value: 4, label: 'Thu' },
+        { value: 5, label: 'Fri' },
+        { value: 6, label: 'Sat' },
+    ];
+
+    const toggleDay = (day: number) => {
+        setFrequencyDays(prev =>
+            prev.includes(day)
+                ? prev.filter(d => d !== day)
+                : [...prev, day].sort((a, b) => a - b)
+        );
+    };
 
     React.useEffect(() => {
         if (habitToEdit) {
             setName(habitToEdit.name);
+            setDescription(habitToEdit.description || '');
             setTimeOfDay(habitToEdit.time_of_day);
             setIcon(habitToEdit.icon);
             setColor(habitToEdit.color);
+            setFrequencyDays(habitToEdit.frequency_days || [0, 1, 2, 3, 4, 5, 6]);
+            setFrequencyType(habitToEdit.frequency_type || 'daily');
+            setFrequencyTarget(habitToEdit.frequency_target || 1);
+            setHabitType(habitToEdit.habit_type || 'boolean');
+            setUnit(habitToEdit.unit || '');
             // If editing and has reminder_time, check if it matches a preset
             if (habitToEdit.reminder_time) {
                 const matchingOption = timeOptions.find(o => o.time === habitToEdit.reminder_time);
@@ -47,10 +77,16 @@ export const HabitDialog: React.FC<HabitDialogProps> = ({ open, onOpenChange, on
             }
         } else {
             setName('');
+            setDescription('');
             setTimeOfDay('anytime');
             setIcon('📝');
             setColor('#6366f1');
             setCustomTime('09:00');
+            setFrequencyDays([0, 1, 2, 3, 4, 5, 6]);
+            setFrequencyType('daily');
+            setFrequencyTarget(1);
+            setHabitType('boolean');
+            setUnit('');
         }
     }, [habitToEdit, open]);
 
@@ -67,15 +103,20 @@ export const HabitDialog: React.FC<HabitDialogProps> = ({ open, onOpenChange, on
         try {
             await onSave({
                 name,
+                description: description || undefined,
                 time_of_day: timeOfDay,
                 icon,
                 color,
-                frequency_type: 'daily',
-                frequency_days: [0, 1, 2, 3, 4, 5, 6],
+                habit_type: habitType,
+                unit: habitType === 'measurable' ? unit || undefined : undefined,
+                frequency_type: frequencyType,
+                frequency_days: frequencyDays,
+                frequency_target: frequencyTarget,
                 reminder_time: getReminderTime(),
             });
             onOpenChange(false);
             setName('');
+            setDescription('');
         } catch (error) {
             console.error(error);
         } finally {
@@ -110,6 +151,120 @@ export const HabitDialog: React.FC<HabitDialogProps> = ({ open, onOpenChange, on
                             placeholder="e.g., Drink water, Read book"
                             required
                         />
+                    </div>
+
+                    <div className="grid gap-2">
+                        <Label htmlFor="description">Description (optional)</Label>
+                        <Input
+                            id="description"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            placeholder="Why is this habit important to you?"
+                        />
+                    </div>
+
+                    <div className="grid gap-2">
+                        <Label>Habit Type</Label>
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setHabitType('boolean')}
+                                className={`flex-1 p-3 rounded-lg border transition-all text-left ${
+                                    habitType === 'boolean'
+                                        ? 'border-primary bg-primary/10'
+                                        : 'border-muted bg-surface hover:border-muted-foreground/50'
+                                }`}
+                            >
+                                <div className="font-medium text-sm">Yes/No</div>
+                                <div className="text-xs text-muted-foreground">Simple completion</div>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setHabitType('measurable')}
+                                className={`flex-1 p-3 rounded-lg border transition-all text-left ${
+                                    habitType === 'measurable'
+                                        ? 'border-primary bg-primary/10'
+                                        : 'border-muted bg-surface hover:border-muted-foreground/50'
+                                }`}
+                            >
+                                <div className="font-medium text-sm">Measurable</div>
+                                <div className="text-xs text-muted-foreground">Track progress</div>
+                            </button>
+                        </div>
+                        {habitType === 'measurable' && (
+                            <div className="flex items-center gap-2 mt-2">
+                                <Input
+                                    value={unit}
+                                    onChange={(e) => setUnit(e.target.value)}
+                                    placeholder="Unit (e.g., glasses, minutes, pages)"
+                                    className="flex-1"
+                                />
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="grid gap-2">
+                        <Label>Repeat Days</Label>
+                        <div className="flex gap-1">
+                            {weekdays.map((day) => (
+                                <button
+                                    key={day.value}
+                                    type="button"
+                                    onClick={() => toggleDay(day.value)}
+                                    className={`flex-1 py-2 px-1 text-xs font-medium rounded-md border transition-all ${
+                                        frequencyDays.includes(day.value)
+                                            ? 'border-primary bg-primary/20 text-primary'
+                                            : 'border-muted bg-surface text-muted-foreground hover:border-muted-foreground/50'
+                                    }`}
+                                >
+                                    {day.label}
+                                </button>
+                            ))}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            {frequencyDays.length === 7 ? 'Every day' :
+                             frequencyDays.length === 0 ? 'Select at least one day' :
+                             `${frequencyDays.length} days per week`}
+                        </p>
+                    </div>
+
+                    <div className="grid gap-2">
+                        <Label>Goal</Label>
+                        <div className="flex items-center gap-2">
+                            <Input
+                                type="number"
+                                min={1}
+                                max={99}
+                                value={frequencyTarget}
+                                onChange={(e) => setFrequencyTarget(Math.max(1, parseInt(e.target.value) || 1))}
+                                className="w-20"
+                            />
+                            <span className="text-sm text-muted-foreground">time{frequencyTarget > 1 ? 's' : ''} per</span>
+                            <div className="flex gap-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setFrequencyType('daily')}
+                                    className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-all ${
+                                        frequencyType === 'daily'
+                                            ? 'border-primary bg-primary/20 text-primary'
+                                            : 'border-muted bg-surface text-muted-foreground hover:border-muted-foreground/50'
+                                    }`}
+                                >
+                                    Day
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setFrequencyType('weekly')}
+                                    className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-all ${
+                                        frequencyType === 'weekly'
+                                            ? 'border-primary bg-primary/20 text-primary'
+                                            : 'border-muted bg-surface text-muted-foreground hover:border-muted-foreground/50'
+                                    }`}
+                                >
+                                    Week
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="grid gap-2">

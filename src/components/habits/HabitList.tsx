@@ -6,7 +6,11 @@ interface HabitListProps {
     title: string;
     habits: Habit[];
     completedHabitIds: string[];
+    progressValues: Record<string, number>;
+    completionNotes: Record<string, string>;
     onToggle: (id: string) => void;
+    onUpdateProgress: (id: string, value: number) => void;
+    onUpdateNotes: (id: string, notes: string) => void;
     onDelete: (id: string) => void;
     onEdit: (habit: Habit) => void;
 }
@@ -15,7 +19,11 @@ export const HabitList: React.FC<HabitListProps> = ({
     title,
     habits,
     completedHabitIds,
+    progressValues,
+    completionNotes,
     onToggle,
+    onUpdateProgress,
+    onUpdateNotes,
     onDelete,
     onEdit
 }) => {
@@ -32,7 +40,11 @@ export const HabitList: React.FC<HabitListProps> = ({
                         <HabitCard
                             habit={habit}
                             isCompleted={completedHabitIds.includes(habit.id)}
+                            currentValue={progressValues[habit.id] || 0}
+                            notes={completionNotes[habit.id] || ''}
                             onToggle={onToggle}
+                            onUpdateProgress={onUpdateProgress}
+                            onUpdateNotes={onUpdateNotes}
                             onDelete={onDelete}
                             onEdit={onEdit}
                         />

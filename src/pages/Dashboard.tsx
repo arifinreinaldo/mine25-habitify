@@ -14,15 +14,26 @@ export default function Dashboard() {
     const navigate = useNavigate();
     const [habits, setHabits] = useState<Habit[]>([]);
     const [completedIds, setCompletedIds] = useState<string[]>([]);
+    const [progressValues, setProgressValues] = useState<Record<string, number>>({}); // habitId -> current value
+    const [completionNotes, setCompletionNotes] = useState<Record<string, string>>({}); // habitId -> notes
     const [loading, setLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
 
     const today = format(new Date(), 'yyyy-MM-dd');
+    const todayDayOfWeek = new Date().getDay(); // 0 = Sunday, 6 = Saturday
+
+    // Filter habits to only show those scheduled for today
+    const todaysHabits = habits.filter(h =>
+        h.frequency_days?.includes(todayDayOfWeek) ?? true
+    );
 
     useEffect(() => {
         if (user) {
             fetchData();
+            // Update page title with username
+            const username = user.email?.split('@')[0] || 'User';
+            document.title = `${username}'s Habits | Habitify`;
         }
     }, [user]);
 
@@ -43,12 +54,22 @@ export default function Dashboard() {
             // Fetch Today's Completions
             const { data: completionsData, error: completionsError } = await supabase
                 .from('completions')
-                .select('habit_id')
+                .select('habit_id, value, notes')
                 .eq('user_id', user!.id)
                 .eq('completed_at', today);
 
             if (completionsError) throw completionsError;
             setCompletedIds(completionsData?.map(c => c.habit_id) || []);
+
+            // Build progress values and notes maps
+            const progressMap: Record<string, number> = {};
+            const notesMap: Record<string, string> = {};
+            completionsData?.forEach(c => {
+                progressMap[c.habit_id] = c.value || 1;
+                if (c.notes) notesMap[c.habit_id] = c.notes;
+            });
+            setProgressValues(progressMap);
+            setCompletionNotes(notesMap);
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
@@ -103,6 +124,12 @@ export default function Dashboard() {
                     .eq('habit_id', habitId)
                     .eq('completed_at', today);
                 if (error) throw error;
+                // Clear progress value
+                setProgressValues(prev => {
+                    const newValues = { ...prev };
+                    delete newValues[habitId];
+                    return newValues;
+                });
             } else {
                 // Insert completion
                 const { error } = await supabase
@@ -110,9 +137,11 @@ export default function Dashboard() {
                     .insert({
                         habit_id: habitId,
                         user_id: user!.id,
-                        completed_at: today
+                        completed_at: today,
+                        value: 1
                     });
                 if (error) throw error;
+                setProgressValues(prev => ({ ...prev, [habitId]: 1 }));
             }
         } catch (error) {
             console.error('Error toggling habit:', error);
@@ -120,6 +149,115 @@ export default function Dashboard() {
             setCompletedIds(prev =>
                 isCompleted ? [...prev, habitId] : prev.filter(id => id !== habitId)
             );
+        }
+    };
+
+    const handleUpdateProgress = async (habitId: string, newValue: number) => {
+        const habit = habits.find(h => h.id === habitId);
+        if (!habit) return;
+
+        const target = habit.frequency_target || 1;
+        const clampedValue = Math.max(0, Math.min(newValue, target));
+        const previousValue = progressValues[habitId] || 0;
+        const wasCompleted = completedIds.includes(habitId);
+
+        // Optimistic update
+        if (clampedValue === 0) {
+            setCompletedIds(prev => prev.filter(id => id !== habitId));
+            setProgressValues(prev => {
+                const newValues = { ...prev };
+                delete newValues[habitId];
+                return newValues;
+            });
+        } else {
+            if (!wasCompleted) {
+                setCompletedIds(prev => [...prev, habitId]);
+            }
+            setProgressValues(prev => ({ ...prev, [habitId]: clampedValue }));
+        }
+
+        try {
+            if (clampedValue === 0) {
+                // Delete completion
+                const { error } = await supabase
+                    .from('completions')
+                    .delete()
+                    .eq('habit_id', habitId)
+                    .eq('completed_at', today);
+                if (error) throw error;
+            } else if (!wasCompleted) {
+                // Insert new completion
+                const { error } = await supabase
+                    .from('completions')
+                    .insert({
+                        habit_id: habitId,
+                        user_id: user!.id,
+                        completed_at: today,
+                        value: clampedValue
+                    });
+                if (error) throw error;
+            } else {
+                // Update existing completion
+                const { error } = await supabase
+                    .from('completions')
+                    .update({ value: clampedValue })
+                    .eq('habit_id', habitId)
+                    .eq('completed_at', today);
+                if (error) throw error;
+            }
+        } catch (error) {
+            console.error('Error updating progress:', error);
+            // Revert on error
+            if (previousValue === 0) {
+                setCompletedIds(prev => prev.filter(id => id !== habitId));
+                setProgressValues(prev => {
+                    const newValues = { ...prev };
+                    delete newValues[habitId];
+                    return newValues;
+                });
+            } else {
+                if (!wasCompleted) {
+                    setCompletedIds(prev => prev.filter(id => id !== habitId));
+                }
+                setProgressValues(prev => ({ ...prev, [habitId]: previousValue }));
+            }
+        }
+    };
+
+    const handleUpdateNotes = async (habitId: string, notes: string) => {
+        const previousNotes = completionNotes[habitId] || '';
+
+        // Optimistic update
+        if (notes) {
+            setCompletionNotes(prev => ({ ...prev, [habitId]: notes }));
+        } else {
+            setCompletionNotes(prev => {
+                const newNotes = { ...prev };
+                delete newNotes[habitId];
+                return newNotes;
+            });
+        }
+
+        try {
+            const { error } = await supabase
+                .from('completions')
+                .update({ notes: notes || null })
+                .eq('habit_id', habitId)
+                .eq('completed_at', today);
+
+            if (error) throw error;
+        } catch (error) {
+            console.error('Error updating notes:', error);
+            // Revert on error
+            if (previousNotes) {
+                setCompletionNotes(prev => ({ ...prev, [habitId]: previousNotes }));
+            } else {
+                setCompletionNotes(prev => {
+                    const newNotes = { ...prev };
+                    delete newNotes[habitId];
+                    return newNotes;
+                });
+            }
         }
     };
 
@@ -178,11 +316,11 @@ export default function Dashboard() {
                 {/* Stats Overview (Simplified for now) */}
                 <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/10">
-                        <div className="text-2xl font-bold text-primary">{completedIds.length}</div>
-                        <div className="text-xs text-muted-foreground uppercase font-semibold">Completed</div>
+                        <div className="text-2xl font-bold text-primary">{completedIds.filter(id => todaysHabits.some(h => h.id === id)).length}/{todaysHabits.length}</div>
+                        <div className="text-xs text-muted-foreground uppercase font-semibold">Completed Today</div>
                     </div>
                     <div className="p-4 rounded-xl bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/10">
-                        <div className="text-2xl font-bold text-green-500">{Math.round((completedIds.length / (habits.length || 1)) * 100)}%</div>
+                        <div className="text-2xl font-bold text-green-500">{Math.round((completedIds.filter(id => todaysHabits.some(h => h.id === id)).length / (todaysHabits.length || 1)) * 100)}%</div>
                         <div className="text-xs text-muted-foreground uppercase font-semibold">Rate</div>
                     </div>
                 </div>
@@ -191,61 +329,85 @@ export default function Dashboard() {
                 <div className="space-y-8">
                     <HabitList
                         title="🌅 Early Morning"
-                        habits={habits.filter(h => h.time_of_day === 'early_morning')}
+                        habits={todaysHabits.filter(h => h.time_of_day === 'early_morning')}
                         completedHabitIds={completedIds}
+                        progressValues={progressValues}
+                        completionNotes={completionNotes}
                         onToggle={handleToggleHabit}
+                        onUpdateProgress={handleUpdateProgress}
+                        onUpdateNotes={handleUpdateNotes}
                         onDelete={handleDeleteHabit}
                         onEdit={handleEditHabit}
                     />
 
                     <HabitList
                         title="☀️ Morning"
-                        habits={habits.filter(h => h.time_of_day === 'morning')}
+                        habits={todaysHabits.filter(h => h.time_of_day === 'morning')}
                         completedHabitIds={completedIds}
+                        progressValues={progressValues}
+                        completionNotes={completionNotes}
                         onToggle={handleToggleHabit}
+                        onUpdateProgress={handleUpdateProgress}
+                        onUpdateNotes={handleUpdateNotes}
                         onDelete={handleDeleteHabit}
                         onEdit={handleEditHabit}
                     />
 
                     <HabitList
                         title="🌤️ Afternoon"
-                        habits={habits.filter(h => h.time_of_day === 'afternoon')}
+                        habits={todaysHabits.filter(h => h.time_of_day === 'afternoon')}
                         completedHabitIds={completedIds}
+                        progressValues={progressValues}
+                        completionNotes={completionNotes}
                         onToggle={handleToggleHabit}
+                        onUpdateProgress={handleUpdateProgress}
+                        onUpdateNotes={handleUpdateNotes}
                         onDelete={handleDeleteHabit}
                         onEdit={handleEditHabit}
                     />
 
                     <HabitList
                         title="🌆 Evening"
-                        habits={habits.filter(h => h.time_of_day === 'evening')}
+                        habits={todaysHabits.filter(h => h.time_of_day === 'evening')}
                         completedHabitIds={completedIds}
+                        progressValues={progressValues}
+                        completionNotes={completionNotes}
                         onToggle={handleToggleHabit}
+                        onUpdateProgress={handleUpdateProgress}
+                        onUpdateNotes={handleUpdateNotes}
                         onDelete={handleDeleteHabit}
                         onEdit={handleEditHabit}
                     />
 
                     <HabitList
                         title="⏰ Custom"
-                        habits={habits.filter(h => h.time_of_day === 'custom')}
+                        habits={todaysHabits.filter(h => h.time_of_day === 'custom')}
                         completedHabitIds={completedIds}
+                        progressValues={progressValues}
+                        completionNotes={completionNotes}
                         onToggle={handleToggleHabit}
+                        onUpdateProgress={handleUpdateProgress}
+                        onUpdateNotes={handleUpdateNotes}
                         onDelete={handleDeleteHabit}
                         onEdit={handleEditHabit}
                     />
 
                     <HabitList
                         title="🚫 No Reminder"
-                        habits={habits.filter(h => h.time_of_day === 'anytime')}
+                        habits={todaysHabits.filter(h => h.time_of_day === 'anytime')}
                         completedHabitIds={completedIds}
+                        progressValues={progressValues}
+                        completionNotes={completionNotes}
                         onToggle={handleToggleHabit}
+                        onUpdateProgress={handleUpdateProgress}
+                        onUpdateNotes={handleUpdateNotes}
                         onDelete={handleDeleteHabit}
                         onEdit={handleEditHabit}
                     />
 
-                    {habits.length === 0 && (
+                    {todaysHabits.length === 0 && (
                         <div className="text-center py-10 text-muted">
-                            <p>No habits yet. Start small!</p>
+                            <p>{habits.length === 0 ? 'No habits yet. Start small!' : 'No habits scheduled for today!'}</p>
                         </div>
                     )}
                 </div>
