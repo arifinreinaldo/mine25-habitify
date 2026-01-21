@@ -1,6 +1,15 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import type { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '../../lib/supabase';
+
+// Detect user's timezone from browser
+const getUserTimezone = () => {
+    try {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone;
+    } catch {
+        return 'UTC';
+    }
+};
 
 interface AuthContextType {
     user: User | null;
@@ -21,11 +30,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState(true);
 
+    // Update user's timezone in profile
+    const updateUserTimezone = useCallback(async (userId: string) => {
+        const timezone = getUserTimezone();
+        await supabase
+            .from('profiles')
+            .upsert({ id: userId, timezone }, { onConflict: 'id' });
+    }, []);
+
     useEffect(() => {
         // Check active sessions and sets the user
         supabase.auth.getSession().then(({ data: { session } }) => {
             setSession(session);
             setUser(session?.user ?? null);
+            if (session?.user) {
+                updateUserTimezone(session.user.id);
+            }
             setLoading(false);
         });
 
@@ -33,11 +53,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
             setSession(session);
             setUser(session?.user ?? null);
+            if (session?.user) {
+                updateUserTimezone(session.user.id);
+            }
             setLoading(false);
         });
 
         return () => subscription.unsubscribe();
-    }, []);
+    }, [updateUserTimezone]);
 
     const signOut = async () => {
         await supabase.auth.signOut();

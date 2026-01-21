@@ -72,16 +72,18 @@ function generateEmailHtml(habitName: string, habitIcon: string): string {
   `;
 }
 
-interface HabitWithUser {
+interface Habit {
   id: string;
   name: string;
   icon: string;
   user_id: string;
   reminder_time: string;
-  profiles: {
-    email: string;
-    timezone: string;
-  };
+}
+
+interface Profile {
+  id: string;
+  email: string;
+  timezone: string;
 }
 
 Deno.serve(async (req) => {
@@ -106,33 +108,21 @@ Deno.serve(async (req) => {
     const timeWindowStart = `${currentHour.toString().padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")}:00`;
     const timeWindowEnd = `${currentHour.toString().padStart(2, "0")}:${(currentMinute + 14).toString().padStart(2, "0")}:59`;
 
-    console.log(`Checking for reminders between ${timeWindowStart} and ${timeWindowEnd} UTC`);
+    console.log(`Current UTC time: ${now.toISOString()}`);
 
-    // Query habits with reminder_time in current window
-    // Join with profiles to get user email and timezone
+    // Query ALL habits with reminders (we'll filter by timezone later)
     const { data: habits, error: habitsError } = await supabase
       .from("habits")
-      .select(
-        `
-        id,
-        name,
-        icon,
-        user_id,
-        reminder_time,
-        profiles!inner(email, timezone)
-      `
-      )
+      .select("id, name, icon, user_id, reminder_time")
       .not("reminder_time", "is", null)
-      .eq("is_archived", false)
-      .gte("reminder_time", timeWindowStart)
-      .lte("reminder_time", timeWindowEnd);
+      .eq("is_archived", false);
 
     if (habitsError) {
       throw habitsError;
     }
 
     if (!habits || habits.length === 0) {
-      console.log("No habits with reminders in this time window");
+      console.log("No habits with reminders");
       return new Response(
         JSON.stringify({ message: "No reminders to send", sent: 0 }),
         {
@@ -141,11 +131,56 @@ Deno.serve(async (req) => {
       );
     }
 
-    const today = now.toISOString().split("T")[0];
+    // Get unique user IDs and fetch their profiles
+    const userIds = [...new Set(habits.map((h: Habit) => h.user_id))];
+    const { data: profiles, error: profilesError } = await supabase
+      .from("profiles")
+      .select("id, email, timezone")
+      .in("id", userIds);
+
+    if (profilesError) {
+      console.error("Error fetching profiles:", profilesError);
+    }
+
+    // Create a map of user_id to profile
+    const profileMap = new Map<string, Profile>();
+    if (profiles) {
+      for (const profile of profiles as Profile[]) {
+        profileMap.set(profile.id, profile);
+      }
+    }
+
     let sentCount = 0;
     const errors: string[] = [];
 
-    for (const habit of habits as unknown as HabitWithUser[]) {
+    for (const habit of habits as Habit[]) {
+      const profile = profileMap.get(habit.user_id);
+      const userEmail = profile?.email;
+      const userTimezone = profile?.timezone || "UTC";
+
+      if (!userEmail) {
+        console.log(`No email for user ${habit.user_id}, skipping`);
+        continue;
+      }
+
+      // Get current time in user's timezone
+      const userLocalTime = new Date(now.toLocaleString("en-US", { timeZone: userTimezone }));
+      const userHour = userLocalTime.getHours();
+      const userMinute = Math.floor(userLocalTime.getMinutes() / 15) * 15;
+      const userTimeWindowStart = `${userHour.toString().padStart(2, "0")}:${userMinute.toString().padStart(2, "0")}:00`;
+      const userTimeWindowEnd = `${userHour.toString().padStart(2, "0")}:${(userMinute + 14).toString().padStart(2, "0")}:59`;
+
+      // Check if habit's reminder_time falls within user's current time window
+      const reminderTime = habit.reminder_time;
+      if (reminderTime < userTimeWindowStart || reminderTime > userTimeWindowEnd) {
+        continue; // Not time for this reminder yet
+      }
+
+      console.log(`Habit ${habit.name} matches time window ${userTimeWindowStart}-${userTimeWindowEnd} for timezone ${userTimezone}`);
+
+      // Get today's date in user's timezone
+      const today = userLocalTime.toISOString().split("T")[0];
+
       // Check if habit was already completed today
       const { data: completion } = await supabase
         .from("completions")
@@ -156,12 +191,6 @@ Deno.serve(async (req) => {
 
       if (completion) {
         console.log(`Habit ${habit.name} already completed today, skipping`);
-        continue;
-      }
-
-      const userEmail = habit.profiles?.email;
-      if (!userEmail) {
-        console.log(`No email for user ${habit.user_id}, skipping`);
         continue;
       }
 
