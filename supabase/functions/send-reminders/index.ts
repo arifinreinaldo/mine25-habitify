@@ -18,11 +18,60 @@ const messages = [
   "Plot twist: {habit} was scheduled for today. Did you forget, or did you just... not care?",
   "Your streak for {habit} is looking lonely. It's giving 'forgotten houseplant' energy.",
   "We're not saying you're avoiding {habit}, but {habit} is starting to take it personally.",
+  "Oh, you're busy? That's cool. {habit} will just sit here. Alone. In the dark.",
+  "{habit} checked its calendar. You were supposed to show up. It's trying not to cry.",
+  "Fun fact: {habit} has been ready for hours. Where were you? Don't answer. It hurts too much.",
+  "You know what's sad? {habit} still believes in you. Questionable judgment, honestly.",
+  "{habit} isn't mad. It's just... processing. Give it a moment.",
+  "Roses are red, violets are blue, {habit} is waiting, and honestly? So disappointed in you.",
+  "We asked {habit} how it's doing. It just stared at the wall. Thanks for that.",
+  "{habit} saw you scrolling on your phone. It saw everything. Do better.",
+  "Your future self called. They said to do {habit}. Also, they sound disappointed.",
+  "Legend says if you ignore {habit} long enough, it becomes someone else's healthy routine.",
+  "{habit} is not saying you're a quitter, but it's updating its LinkedIn.",
+  "Do you smell that? That's the smell of {habit} losing hope.",
+  "Somewhere out there, a very tired {habit} is writing poetry about abandonment.",
+  "{habit} told the other habits you'd show up. Now it looks like a liar. Happy?",
+  "We're legally required to inform you: {habit} has filed an emotional complaint.",
+  "{habit} started a journal. Day 1: 'They didn't come again.' It's getting dark.",
+  "If {habit} had a therapist, you'd be the main topic. Just saying.",
+  "Congratulations! You've unlocked: {habit}'s trust issues.",
+  "{habit} was going to send you a motivational quote, but honestly, it's too tired.",
+  "This is {habit}'s villain origin story. You did this.",
+];
+
+// Passive-aggressive subject lines
+const subjects = [
+  "👀 {habit} is waiting...",
+  "😐 {habit} noticed you haven't shown up",
+  "🥀 {habit} is wilting without you",
+  "💔 {habit} would like a word",
+  "🙃 Everything is fine. ({habit} is not fine)",
+  "👁️ {habit} sees you ignoring it",
+  "🪦 RIP your {habit} streak",
+  "🚨 {habit} has filed a missing person report",
+  "😶 {habit} is giving you the silent treatment",
+  "🎭 {habit} is pretending not to care",
+  "📉 Your {habit} commitment is showing",
+  "🥲 {habit} is fine. Totally fine.",
+  "⏰ Tick tock... {habit} is still waiting",
+  "🦗 *crickets* - Your {habit}, probably",
+  "🪑 {habit} saved you a seat. It's getting cold.",
+  "📬 You have 1 unread guilt trip from {habit}",
+  "🎪 Welcome to the '{habit}' disappointment show",
+  "🌧️ {habit}'s forecast: 100% chance of neglect",
+  "🔔 Reminder: {habit} remembers everything",
+  "💀 {habit} is dead inside (because of you)",
 ];
 
 function getRandomMessage(habitName: string): string {
   const randomIndex = Math.floor(Math.random() * messages.length);
   return messages[randomIndex].replace(/{habit}/g, habitName);
+}
+
+function getRandomSubject(habitName: string): string {
+  const randomIndex = Math.floor(Math.random() * subjects.length);
+  return subjects[randomIndex].replace(/{habit}/g, habitName);
 }
 
 function generateEmailHtml(habitName: string, habitIcon: string): string {
@@ -95,9 +144,17 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const brevoApiKey = Deno.env.get("BREVO_API_KEY")!;
+    const brevoApiKey = Deno.env.get("BREVO_API_KEY");
     const senderEmail = Deno.env.get("SENDER_EMAIL") || "noreply@habitify.app";
     const senderName = Deno.env.get("SENDER_NAME") || "Habitify";
+
+    // Debug: Check if API key is loaded
+    console.log(`BREVO_API_KEY exists: ${!!brevoApiKey}`);
+    console.log(`BREVO_API_KEY starts with: ${brevoApiKey?.substring(0, 10)}...`);
+
+    if (!brevoApiKey) {
+      throw new Error("BREVO_API_KEY is not set");
+    }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -198,6 +255,8 @@ Deno.serve(async (req) => {
       try {
         const emailHtml = generateEmailHtml(habit.name, habit.icon);
 
+        const emailSubject = getRandomSubject(habit.name);
+
         const response = await fetch("https://api.brevo.com/v3/smtp/email", {
           method: "POST",
           headers: {
@@ -208,7 +267,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             sender: { name: senderName, email: senderEmail },
             to: [{ email: userEmail }],
-            subject: `👀 ${habit.name} is waiting...`,
+            subject: emailSubject,
             htmlContent: emailHtml,
           }),
         });

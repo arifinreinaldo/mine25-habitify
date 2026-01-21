@@ -5,7 +5,8 @@
       "Bash(npm install:*)",
       "Bash(npm uninstall:*)",
       "WebSearch",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "WebFetch(domain:developers.brevo.com)"
     ]
   }
 }
