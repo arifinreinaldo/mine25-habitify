@@ -95,9 +95,9 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const mailerooApiKey = Deno.env.get("MAILEROO_API_KEY")!;
-    const mailerooFromEmail =
-      Deno.env.get("MAILEROO_FROM_EMAIL") || "noreply@habitify.app";
+    const brevoApiKey = Deno.env.get("BREVO_API_KEY")!;
+    const senderEmail = Deno.env.get("SENDER_EMAIL") || "noreply@habitify.app";
+    const senderName = Deno.env.get("SENDER_NAME") || "Habitify";
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -194,27 +194,28 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Send email via Maileroo
+      // Send email via Brevo
       try {
         const emailHtml = generateEmailHtml(habit.name, habit.icon);
 
-        const response = await fetch("https://smtp.maileroo.com/send", {
+        const response = await fetch("https://api.brevo.com/v3/smtp/email", {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
-            "X-API-Key": mailerooApiKey,
+            "accept": "application/json",
+            "api-key": brevoApiKey,
+            "content-type": "application/json",
           },
           body: JSON.stringify({
-            from: `Habitify <${mailerooFromEmail}>`,
-            to: userEmail,
+            sender: { name: senderName, email: senderEmail },
+            to: [{ email: userEmail }],
             subject: `👀 ${habit.name} is waiting...`,
-            html: emailHtml,
+            htmlContent: emailHtml,
           }),
         });
 
         if (!response.ok) {
           const errorText = await response.text();
-          console.error(`Maileroo error for ${habit.name}: ${errorText}`);
+          console.error(`Brevo error for ${habit.name}: ${errorText}`);
           errors.push(`${habit.name}: ${errorText}`);
         } else {
           console.log(`Sent reminder for ${habit.name} to ${userEmail}`);
