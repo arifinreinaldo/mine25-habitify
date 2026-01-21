@@ -16,7 +16,7 @@ npm run preview  # Preview production build locally
 This is a **habit tracking application** (Habitify clone) built with:
 - **React 19** + **TypeScript** + **Vite**
 - **Supabase** for authentication and database
-- **Tailwind CSS v4** for styling
+- **Tailwind CSS v3** for styling
 - **Radix UI** primitives for accessible components
 - **React Router v7** for routing
 
@@ -37,9 +37,10 @@ src/
 
 ### Data Model
 
-Two Supabase tables:
-- **habits**: User habits with name, icon, color, time_of_day (morning/afternoon/evening/anytime), frequency settings
+Three Supabase tables:
+- **habits**: User habits with name, icon, color, time_of_day (early_morning/morning/afternoon/evening/custom/anytime), frequency settings
 - **completions**: Records of habit completions by date (completed_at as YYYY-MM-DD)
+- **profiles**: User profiles storing timezone (auto-updated on login)
 
 ### Key Patterns
 
