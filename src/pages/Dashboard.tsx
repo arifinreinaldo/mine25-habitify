@@ -3,9 +3,12 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../features/auth/AuthContext';
 import { HabitDialog } from '../components/habits/HabitDialog';
 import { HabitList } from '../components/habits/HabitList';
+import { NotificationSettings } from '../components/NotificationSettings';
+import { InstallPrompt } from '../components/InstallPrompt';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import type { Habit } from '../types/habit';
 import { format } from 'date-fns';
-import { Loader2, LogOut, Plus } from 'lucide-react';
+import { Loader2, LogOut, Plus, Settings } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
@@ -18,6 +21,7 @@ export default function Dashboard() {
     const [completionNotes, setCompletionNotes] = useState<Record<string, string>>({}); // habitId -> notes
     const [loading, setLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
 
     const today = format(new Date(), 'yyyy-MM-dd');
@@ -305,9 +309,14 @@ export default function Dashboard() {
                         <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Hello, {user?.email?.split('@')[0]}!</h1>
                         <p className="text-sm text-muted">{format(new Date(), 'EEEE, MMMM do')}</p>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={handleSignOut}>
-                        <LogOut className="h-5 w-5" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(true)}>
+                            <Settings className="h-5 w-5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={handleSignOut}>
+                            <LogOut className="h-5 w-5" />
+                        </Button>
+                    </div>
                 </div>
             </header>
 
@@ -432,6 +441,19 @@ export default function Dashboard() {
                 onSave={handleSaveHabit}
                 habitToEdit={editingHabit || undefined}
             />
+
+            {/* Settings Dialog */}
+            <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Settings</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <InstallPrompt />
+                        <NotificationSettings />
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
