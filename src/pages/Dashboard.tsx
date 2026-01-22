@@ -5,6 +5,7 @@ import { HabitDialog } from '../components/habits/HabitDialog';
 import { HabitList } from '../components/habits/HabitList';
 import { NotificationSettings } from '../components/NotificationSettings';
 import { InstallPrompt } from '../components/InstallPrompt';
+import { NtfySettings } from '../components/NtfySettings';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import type { Habit } from '../types/habit';
 import { format } from 'date-fns';
@@ -450,6 +451,7 @@ export default function Dashboard() {
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <InstallPrompt />
+                        <NtfySettings />
                         <NotificationSettings />
                     </div>
                 </DialogContent>

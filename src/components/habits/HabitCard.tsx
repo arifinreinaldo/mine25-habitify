@@ -173,7 +173,7 @@ export const HabitCard: React.FC<HabitCardProps> = ({
                         </Popover>
                     )}
 
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                    <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         <Button variant="ghost" size="icon" onClick={() => onEdit(habit)} className="h-8 w-8 text-muted-foreground hover:text-white">
                             <Edit className="h-4 w-4" />
                         </Button>
