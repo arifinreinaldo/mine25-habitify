@@ -6,7 +6,9 @@
       "Bash(npm uninstall:*)",
       "WebSearch",
       "Bash(dir:*)",
-      "WebFetch(domain:developers.brevo.com)"
+      "WebFetch(domain:developers.brevo.com)",
+      "Bash(npx pwa-asset-generator:*)",
+      "Bash(npx web-push generate-vapid-keys)"
     ]
   }
 }

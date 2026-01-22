@@ -138,10 +138,10 @@ export const HabitDialog: React.FC<HabitDialogProps> = ({ open, onOpenChange, on
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
+                <DialogHeader className="flex-shrink-0">
                     <DialogTitle>{habitToEdit ? 'Edit Habit' : 'Create New Habit'}</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+                <form onSubmit={handleSubmit} className="grid gap-4 py-4 overflow-y-auto flex-1 min-h-0 pr-2">
                     <div className="grid gap-2">
                         <Label htmlFor="name">Habit Name</Label>
                         <Input

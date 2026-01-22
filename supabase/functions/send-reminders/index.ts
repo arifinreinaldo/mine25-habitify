@@ -158,12 +158,12 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get current time in 15-minute window
+    // Get current time in 5-minute window (matches scheduler interval)
     const now = new Date();
     const currentHour = now.getUTCHours();
-    const currentMinute = Math.floor(now.getUTCMinutes() / 15) * 15;
+    const currentMinute = Math.floor(now.getUTCMinutes() / 5) * 5;
     const timeWindowStart = `${currentHour.toString().padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")}:00`;
-    const timeWindowEnd = `${currentHour.toString().padStart(2, "0")}:${(currentMinute + 14).toString().padStart(2, "0")}:59`;
+    const timeWindowEnd = `${currentHour.toString().padStart(2, "0")}:${(currentMinute + 4).toString().padStart(2, "0")}:59`;
 
     console.log(`Current UTC time: ${now.toISOString()}`);
 
@@ -223,9 +223,10 @@ Deno.serve(async (req) => {
       // Get current time in user's timezone
       const userLocalTime = new Date(now.toLocaleString("en-US", { timeZone: userTimezone }));
       const userHour = userLocalTime.getHours();
-      const userMinute = Math.floor(userLocalTime.getMinutes() / 15) * 15;
+      // Use 5-minute window to match scheduler interval (prevents duplicate sends)
+      const userMinute = Math.floor(userLocalTime.getMinutes() / 5) * 5;
       const userTimeWindowStart = `${userHour.toString().padStart(2, "0")}:${userMinute.toString().padStart(2, "0")}:00`;
-      const userTimeWindowEnd = `${userHour.toString().padStart(2, "0")}:${(userMinute + 14).toString().padStart(2, "0")}:59`;
+      const userTimeWindowEnd = `${userHour.toString().padStart(2, "0")}:${(userMinute + 4).toString().padStart(2, "0")}:59`;
 
       // Check if habit's reminder_time falls within user's current time window
       const reminderTime = habit.reminder_time;
