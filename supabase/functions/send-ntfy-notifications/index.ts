@@ -55,21 +55,27 @@ async function sendNtfyNotification(
   title: string,
   message: string,
   icon: string,
-  priority: number = 3
+  priority: number = 4
 ): Promise<boolean> {
   try {
-    const response = await fetch(`https://ntfy.sh/${topic}`, {
+    // Use JSON body format to handle special characters properly
+    const response = await fetch("https://ntfy.sh", {
       method: "POST",
       headers: {
-        "Title": title,
-        "Priority": priority.toString(),
-        "Tags": icon,
+        "Content-Type": "application/json",
       },
-      body: message,
+      body: JSON.stringify({
+        topic: topic,
+        title: title,
+        message: message,
+        priority: priority,
+        tags: [icon.replace(/[^\p{Emoji}]/gu, "") || "bell"], // Extract emoji or use default
+      }),
     });
 
     if (!response.ok) {
-      console.error(`ntfy.sh error: ${response.status} ${await response.text()}`);
+      const errorText = await response.text();
+      console.error(`ntfy.sh error: ${response.status} ${errorText}`);
       return false;
     }
 
