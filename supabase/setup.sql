@@ -92,7 +92,7 @@ CREATE POLICY "Users manage own push subscriptions" ON push_subscriptions FOR AL
 -- CREATE EXTENSION IF NOT EXISTS pg_cron;
 -- CREATE EXTENSION IF NOT EXISTS pg_net;
 
--- Schedule reminder function every 15 minutes
+-- Schedule email reminder function every 15 minutes
 -- Replace YOUR_SUPABASE_URL with your actual Supabase URL
 -- Replace YOUR_ANON_KEY with your actual anon key
 /*
@@ -108,3 +108,26 @@ SELECT cron.schedule(
   $$
 );
 */
+
+-- 8. PUSH NOTIFICATIONS CRON SETUP
+-- Schedule push notification function every 5 minutes
+-- This runs more frequently than email for timely push notifications
+/*
+SELECT cron.schedule(
+  'send-push-notifications',
+  '*/5 * * * *',
+  $$
+  SELECT net.http_post(
+    url := 'YOUR_SUPABASE_URL/functions/v1/send-push-notifications',
+    headers := '{"Content-Type": "application/json", "Authorization": "Bearer YOUR_ANON_KEY"}'::jsonb,
+    body := '{}'::jsonb
+  ) AS request_id;
+  $$
+);
+*/
+
+-- To check scheduled jobs:
+-- SELECT * FROM cron.job;
+
+-- To unschedule a job:
+-- SELECT cron.unschedule('send-push-notifications');
