@@ -30,3 +30,6 @@ export interface Completion {
     notes?: string;
     created_at: string;
 }
+
+// Re-export StreakData for convenience
+export type { StreakData } from '../lib/streaks';

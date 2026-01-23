@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { Card } from '../ui/card';
 import { Checkbox } from '../ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import type { Habit } from '../../types/habit';
+import type { Habit, StreakData } from '../../types/habit';
 import { cn } from '../../lib/utils';
-import { Trash2, Edit, Minus, Plus, MessageSquare } from 'lucide-react';
+import { Trash2, Edit, Minus, Plus, MessageSquare, Flame } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 
@@ -18,6 +18,7 @@ interface HabitCardProps {
     onUpdateNotes: (habitId: string, notes: string) => void;
     onDelete: (habitId: string) => void;
     onEdit: (habit: Habit) => void;
+    streak?: StreakData;
 }
 
 export const HabitCard: React.FC<HabitCardProps> = ({
@@ -29,7 +30,8 @@ export const HabitCard: React.FC<HabitCardProps> = ({
     onUpdateProgress,
     onUpdateNotes,
     onDelete,
-    onEdit
+    onEdit,
+    streak
 }) => {
     const [localNotes, setLocalNotes] = useState(notes);
     const [isNotesOpen, setIsNotesOpen] = useState(false);
@@ -88,6 +90,17 @@ export const HabitCard: React.FC<HabitCardProps> = ({
                             <> • {target}x/{habit.frequency_type === 'daily' ? 'day' : 'week'}</>
                         )}
                     </p>
+                    {streak && streak.currentStreak > 0 && (
+                        <div className="flex items-center gap-1 mt-1">
+                            <Flame className="h-3 w-3 text-orange-500" />
+                            <span className="text-xs text-orange-500 font-medium">
+                                {streak.currentStreak} day streak
+                                {streak.bestStreak > streak.currentStreak && (
+                                    <span className="text-muted-foreground font-normal"> • Best: {streak.bestStreak}</span>
+                                )}
+                            </span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Actions */}

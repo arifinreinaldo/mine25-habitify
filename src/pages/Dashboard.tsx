@@ -7,9 +7,10 @@ import { InstallPrompt } from '../components/InstallPrompt';
 import { NotificationPreferences } from '../components/NotificationPreferences';
 import { NtfySettings } from '../components/NtfySettings';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
-import type { Habit } from '../types/habit';
-import { format } from 'date-fns';
-import { Loader2, LogOut, Plus, Settings } from 'lucide-react';
+import type { Habit, StreakData } from '../types/habit';
+import { calculateStreak } from '../lib/streaks';
+import { format, subDays } from 'date-fns';
+import { Loader2, LogOut, Plus, Settings, Edit, Trash2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
@@ -20,6 +21,7 @@ export default function Dashboard() {
     const [completedIds, setCompletedIds] = useState<string[]>([]);
     const [progressValues, setProgressValues] = useState<Record<string, number>>({}); // habitId -> current value
     const [completionNotes, setCompletionNotes] = useState<Record<string, string>>({}); // habitId -> notes
+    const [streakData, setStreakData] = useState<Record<string, StreakData>>({}); // habitId -> streak info
     const [loading, setLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -452,12 +454,20 @@ export default function Dashboard() {
                                                     {habit.frequency_days?.map(d => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][Number(d)]).join(', ')}
                                                 </div>
                                             </div>
-                                            <button
-                                                onClick={() => handleEditHabit(habit)}
-                                                className="text-xs text-muted-foreground hover:text-primary"
-                                            >
-                                                Edit
-                                            </button>
+                                            <div className="flex gap-1">
+                                                <button
+                                                    onClick={() => handleEditHabit(habit)}
+                                                    className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
+                                                >
+                                                    <Edit className="h-4 w-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteHabit(habit.id)}
+                                                    className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>

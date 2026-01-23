@@ -1,6 +1,6 @@
 import React from 'react';
 import { HabitCard } from './HabitCard';
-import type { Habit } from '../../types/habit';
+import type { Habit, StreakData } from '../../types/habit';
 
 interface HabitListProps {
     title: string;
@@ -13,6 +13,7 @@ interface HabitListProps {
     onUpdateNotes: (id: string, notes: string) => void;
     onDelete: (id: string) => void;
     onEdit: (habit: Habit) => void;
+    streakData?: Record<string, StreakData>;
 }
 
 export const HabitList: React.FC<HabitListProps> = ({
@@ -25,7 +26,8 @@ export const HabitList: React.FC<HabitListProps> = ({
     onUpdateProgress,
     onUpdateNotes,
     onDelete,
-    onEdit
+    onEdit,
+    streakData
 }) => {
     if (habits.length === 0) return null;
 
@@ -47,6 +49,7 @@ export const HabitList: React.FC<HabitListProps> = ({
                             onUpdateNotes={onUpdateNotes}
                             onDelete={onDelete}
                             onEdit={onEdit}
+                            streak={streakData?.[habit.id]}
                         />
                     </div>
                 ))}
