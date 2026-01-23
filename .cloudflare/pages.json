@@ -1,0 +1,11 @@
+{
+  "ci": {
+    "skipBuilds": {
+      "paths": [
+        "habitify_widget/**",
+        "WIDGET_PLAN.md",
+        "*.md"
+      ]
+    }
+  }
+}

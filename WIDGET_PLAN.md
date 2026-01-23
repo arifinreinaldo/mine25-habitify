@@ -7,6 +7,8 @@
 
 Create a Duolingo-style Android home screen widget that displays habit progress and streak information, fetching data from Supabase.
 
+**Note:** iOS widget support will be added after Android widget is fully stable.
+
 ## Widget Preview
 
 ```
