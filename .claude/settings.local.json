@@ -9,7 +9,9 @@
       "WebFetch(domain:developers.brevo.com)",
       "Bash(npx pwa-asset-generator:*)",
       "Bash(npx web-push generate-vapid-keys)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run lint:*)"
     ]
   }
 }

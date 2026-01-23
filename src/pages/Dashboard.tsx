@@ -3,8 +3,8 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../features/auth/AuthContext';
 import { HabitDialog } from '../components/habits/HabitDialog';
 import { HabitList } from '../components/habits/HabitList';
-import { NotificationSettings } from '../components/NotificationSettings';
 import { InstallPrompt } from '../components/InstallPrompt';
+import { NotificationPreferences } from '../components/NotificationPreferences';
 import { NtfySettings } from '../components/NtfySettings';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import type { Habit } from '../types/habit';
@@ -451,8 +451,8 @@ export default function Dashboard() {
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <InstallPrompt />
+                        <NotificationPreferences />
                         <NtfySettings />
-                        <NotificationSettings />
                     </div>
                 </DialogContent>
             </Dialog>

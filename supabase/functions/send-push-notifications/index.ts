@@ -121,11 +121,12 @@ Deno.serve(async (req) => {
     // Get unique user IDs
     const userIds = [...new Set(habits.map((h: Habit) => h.user_id))];
 
-    // Fetch profiles with timezone
+    // Fetch profiles with timezone (only those with push enabled)
     const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
-      .select("id, timezone")
-      .in("id", userIds);
+      .select("id, timezone, notify_push")
+      .in("id", userIds)
+      .eq("notify_push", true);
 
     if (profilesError) {
       console.error("Error fetching profiles:", profilesError);

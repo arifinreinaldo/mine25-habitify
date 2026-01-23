@@ -130,11 +130,12 @@ Deno.serve(async (req) => {
     // Get unique user IDs
     const userIds = [...new Set(habits.map((h: Habit) => h.user_id))];
 
-    // Fetch profiles with timezone and email
+    // Fetch profiles with timezone and email (only those with ntfy enabled)
     const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
-      .select("id, email, timezone")
-      .in("id", userIds);
+      .select("id, email, timezone, notify_ntfy")
+      .in("id", userIds)
+      .eq("notify_ntfy", true);
 
     if (profilesError) {
       console.error("Error fetching profiles:", profilesError);

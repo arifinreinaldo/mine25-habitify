@@ -46,6 +46,9 @@ CREATE TABLE profiles (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
   email TEXT,
   timezone TEXT DEFAULT 'America/New_York',
+  notify_push BOOLEAN DEFAULT true,
+  notify_ntfy BOOLEAN DEFAULT true,
+  notify_email BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -87,7 +90,19 @@ CREATE INDEX idx_push_subscriptions_user_id ON push_subscriptions(user_id);
 ALTER TABLE push_subscriptions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users manage own push subscriptions" ON push_subscriptions FOR ALL USING (auth.uid() = user_id);
 
--- 7. CRON SETUP (run after enabling pg_cron and pg_net extensions in Supabase dashboard)
+-- 7. NOTIFICATION PREFERENCES (add columns to profiles)
+-- Run this migration for existing databases:
+-- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS notify_push BOOLEAN DEFAULT true;
+-- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS notify_ntfy BOOLEAN DEFAULT true;
+-- ALTER TABLE profiles ADD COLUMN IF NOT EXISTS notify_email BOOLEAN DEFAULT true;
+
+-- For new installations, these columns are included in the profiles table definition above.
+-- If you're setting up fresh, modify the profiles table creation to include:
+--   notify_push BOOLEAN DEFAULT true,
+--   notify_ntfy BOOLEAN DEFAULT true,
+--   notify_email BOOLEAN DEFAULT true,
+
+-- 8. CRON SETUP (run after enabling pg_cron and pg_net extensions in Supabase dashboard)
 -- Enable extensions first:
 -- CREATE EXTENSION IF NOT EXISTS pg_cron;
 -- CREATE EXTENSION IF NOT EXISTS pg_net;

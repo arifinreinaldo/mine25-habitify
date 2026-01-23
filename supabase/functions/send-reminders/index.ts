@@ -188,12 +188,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get unique user IDs and fetch their profiles
+    // Get unique user IDs and fetch their profiles (only those with email enabled)
     const userIds = [...new Set(habits.map((h: Habit) => h.user_id))];
     const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
-      .select("id, email, timezone")
-      .in("id", userIds);
+      .select("id, email, timezone, notify_email")
+      .in("id", userIds)
+      .eq("notify_email", true);
 
     if (profilesError) {
       console.error("Error fetching profiles:", profilesError);
