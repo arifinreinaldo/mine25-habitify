@@ -51,73 +51,74 @@ export const HabitCard: React.FC<HabitCardProps> = ({
 
     return (
         <Card className={cn(
-            "flex flex-col p-4 transition-all duration-300 hover:scale-[1.02]",
+            "flex flex-col p-3 sm:p-4 transition-all duration-300 hover:scale-[1.02] overflow-hidden",
             isGoalMet ? "bg-primary/10 border-primary/20" : "bg-surface/40 hover:bg-surface/60"
         )}>
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <div
-                        className={cn(
-                            "flex h-12 w-12 items-center justify-center rounded-xl text-2xl shadow-sm transition-colors",
-                            isGoalMet ? "bg-primary text-white" : "bg-surface text-muted-foreground"
-                        )}
-                        style={!isGoalMet ? { backgroundColor: `${habit.color}20`, color: habit.color } : {}}
-                    >
-                        {habit.icon || '📝'}
-                    </div>
-
-                    <div>
-                        <h3 className={cn(
-                            "font-semibold text-lg transition-all",
-                            isGoalMet && "text-muted-foreground line-through"
-                        )}>
-                            {habit.name}
-                        </h3>
-                        {habit.description && (
-                            <p className="text-sm text-muted-foreground line-clamp-1">
-                                {habit.description}
-                            </p>
-                        )}
-                        <p className="text-xs text-muted-foreground capitalize">
-                            {habit.time_of_day.replace('_', ' ')}
-                            {isMeasurable && habit.unit && (
-                                <> • {currentValue}/{target} {habit.unit}</>
-                            )}
-                            {!isMeasurable && target > 1 && (
-                                <> • {target}x/{habit.frequency_type === 'daily' ? 'day' : 'week'}</>
-                            )}
-                        </p>
-                    </div>
+            <div className="flex items-center gap-2 sm:gap-4">
+                {/* Icon */}
+                <div
+                    className={cn(
+                        "flex-shrink-0 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl text-xl sm:text-2xl shadow-sm transition-colors",
+                        isGoalMet ? "bg-primary text-white" : "bg-surface text-muted-foreground"
+                    )}
+                    style={!isGoalMet ? { backgroundColor: `${habit.color}20`, color: habit.color } : {}}
+                >
+                    {habit.icon || '📝'}
                 </div>
 
-                <div className="flex items-center gap-2">
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                    <h3 className={cn(
+                        "font-semibold text-base sm:text-lg transition-all truncate",
+                        isGoalMet && "text-muted-foreground line-through"
+                    )}>
+                        {habit.name}
+                    </h3>
+                    {habit.description && (
+                        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1">
+                            {habit.description}
+                        </p>
+                    )}
+                    <p className="text-xs text-muted-foreground capitalize">
+                        {habit.time_of_day.replace('_', ' ')}
+                        {isMeasurable && habit.unit && (
+                            <> • {currentValue}/{target} {habit.unit}</>
+                        )}
+                        {!isMeasurable && target > 1 && (
+                            <> • {target}x/{habit.frequency_type === 'daily' ? 'day' : 'week'}</>
+                        )}
+                    </p>
+                </div>
+
+                {/* Actions */}
+                <div className="flex-shrink-0 flex items-center gap-1 sm:gap-2">
                     {isMeasurable ? (
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center">
                             <Button
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => onUpdateProgress(habit.id, currentValue - 1)}
                                 disabled={currentValue <= 0}
-                                className="h-8 w-8"
+                                className="h-7 w-7 sm:h-8 sm:w-8"
                             >
-                                <Minus className="h-4 w-4" />
+                                <Minus className="h-3 w-3 sm:h-4 sm:w-4" />
                             </Button>
-                            <span className="w-8 text-center font-semibold">{currentValue}</span>
+                            <span className="w-6 sm:w-8 text-center font-semibold text-sm sm:text-base">{currentValue}</span>
                             <Button
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => onUpdateProgress(habit.id, currentValue + 1)}
                                 disabled={currentValue >= target}
-                                className="h-8 w-8"
+                                className="h-7 w-7 sm:h-8 sm:w-8"
                             >
-                                <Plus className="h-4 w-4" />
+                                <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
                             </Button>
                         </div>
                     ) : (
                         <Checkbox
                             checked={isCompleted}
                             onCheckedChange={() => onToggle(habit.id)}
-                            className="h-6 w-6 border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                            className="h-5 w-5 sm:h-6 sm:w-6 border-2 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                         />
                     )}
 
@@ -129,14 +130,14 @@ export const HabitCard: React.FC<HabitCardProps> = ({
                                     variant="ghost"
                                     size="icon"
                                     className={cn(
-                                        "h-8 w-8",
+                                        "h-7 w-7 sm:h-8 sm:w-8",
                                         notes ? "text-primary" : "text-muted-foreground"
                                     )}
                                 >
-                                    <MessageSquare className="h-4 w-4" />
+                                    <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4" />
                                 </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-80" align="end">
+                            <PopoverContent className="w-72 sm:w-80" align="end">
                                 <div className="grid gap-3">
                                     <div className="space-y-1">
                                         <h4 className="font-medium text-sm">Check-in Notes</h4>
@@ -173,12 +174,12 @@ export const HabitCard: React.FC<HabitCardProps> = ({
                         </Popover>
                     )}
 
-                    <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" onClick={() => onEdit(habit)} className="h-8 w-8 text-muted-foreground hover:text-white">
-                            <Edit className="h-4 w-4" />
+                    <div className="flex sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="icon" onClick={() => onEdit(habit)} className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground hover:text-white">
+                            <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => onDelete(habit.id)} className="h-8 w-8 text-muted-foreground hover:text-destructive">
-                            <Trash2 className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" onClick={() => onDelete(habit.id)} className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground hover:text-destructive">
+                            <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
                     </div>
                 </div>
