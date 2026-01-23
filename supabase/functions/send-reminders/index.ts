@@ -135,6 +135,98 @@ interface Profile {
   timezone: string;
 }
 
+interface EmailResult {
+  success: boolean;
+  provider: "brevo" | "maileroo";
+  error?: string;
+}
+
+// Send email with Brevo, fallback to Maileroo on rate limit
+async function sendEmailWithFallback(
+  to: string,
+  subject: string,
+  htmlContent: string,
+  senderName: string,
+  senderEmail: string,
+  brevoApiKey: string | undefined,
+  mailerooApiKey: string | undefined
+): Promise<EmailResult> {
+
+  // Try Brevo first
+  if (brevoApiKey) {
+    try {
+      const brevoResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+          "accept": "application/json",
+          "api-key": brevoApiKey,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          sender: { name: senderName, email: senderEmail },
+          to: [{ email: to }],
+          subject: subject,
+          htmlContent: htmlContent,
+        }),
+      });
+
+      if (brevoResponse.ok) {
+        return { success: true, provider: "brevo" };
+      }
+
+      const brevoError = await brevoResponse.text();
+      console.log(`Brevo response: ${brevoError}`);
+
+      // Check for rate limit or quota errors
+      const isRateLimitError =
+        brevoError.includes("rate limit") ||
+        brevoError.includes("quota") ||
+        brevoError.includes("limit exceeded") ||
+        brevoError.includes("too many requests") ||
+        brevoResponse.status === 429;
+
+      if (!isRateLimitError) {
+        // Non-rate-limit error, don't fallback
+        return { success: false, provider: "brevo", error: brevoError };
+      }
+
+      console.log("Brevo rate limited, falling back to Maileroo...");
+    } catch (brevoErr) {
+      console.error("Brevo request failed:", brevoErr);
+    }
+  }
+
+  // Fallback to Maileroo
+  if (mailerooApiKey) {
+    try {
+      const formData = new FormData();
+      formData.append("from", `${senderName} <${senderEmail}>`);
+      formData.append("to", to);
+      formData.append("subject", subject);
+      formData.append("html", htmlContent);
+
+      const mailerooResponse = await fetch("https://smtp.maileroo.com/send", {
+        method: "POST",
+        headers: {
+          "X-API-Key": mailerooApiKey,
+        },
+        body: formData,
+      });
+
+      if (mailerooResponse.ok) {
+        return { success: true, provider: "maileroo" };
+      }
+
+      const mailerooError = await mailerooResponse.text();
+      return { success: false, provider: "maileroo", error: mailerooError };
+    } catch (mailerooErr) {
+      return { success: false, provider: "maileroo", error: String(mailerooErr) };
+    }
+  }
+
+  return { success: false, provider: "brevo", error: "No email provider configured" };
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -145,15 +237,16 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const brevoApiKey = Deno.env.get("BREVO_API_KEY");
+    const mailerooApiKey = Deno.env.get("MAILEROO_API_KEY");
     const senderEmail = Deno.env.get("SENDER_EMAIL") || "noreply@habitify.app";
     const senderName = Deno.env.get("SENDER_NAME") || "Habitify";
 
-    // Debug: Check if API key is loaded
+    // Debug: Check if API keys are loaded
     console.log(`BREVO_API_KEY exists: ${!!brevoApiKey}`);
-    console.log(`BREVO_API_KEY starts with: ${brevoApiKey?.substring(0, 10)}...`);
+    console.log(`MAILEROO_API_KEY exists: ${!!mailerooApiKey}`);
 
-    if (!brevoApiKey) {
-      throw new Error("BREVO_API_KEY is not set");
+    if (!brevoApiKey && !mailerooApiKey) {
+      throw new Error("No email provider configured. Set BREVO_API_KEY or MAILEROO_API_KEY");
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -253,34 +346,27 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Send email via Brevo
+      // Send email (Brevo first, fallback to Maileroo on rate limit)
       try {
         const emailHtml = generateEmailHtml(habit.name, habit.icon);
-
         const emailSubject = getRandomSubject(habit.name);
 
-        const response = await fetch("https://api.brevo.com/v3/smtp/email", {
-          method: "POST",
-          headers: {
-            "accept": "application/json",
-            "api-key": brevoApiKey,
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({
-            sender: { name: senderName, email: senderEmail },
-            to: [{ email: userEmail }],
-            subject: emailSubject,
-            htmlContent: emailHtml,
-          }),
-        });
+        const result = await sendEmailWithFallback(
+          userEmail,
+          emailSubject,
+          emailHtml,
+          senderName,
+          senderEmail,
+          brevoApiKey,
+          mailerooApiKey
+        );
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`Brevo error for ${habit.name}: ${errorText}`);
-          errors.push(`${habit.name}: ${errorText}`);
-        } else {
-          console.log(`Sent reminder for ${habit.name} to ${userEmail}`);
+        if (result.success) {
+          console.log(`Sent reminder for ${habit.name} to ${userEmail} via ${result.provider}`);
           sentCount++;
+        } else {
+          console.error(`Failed to send email for ${habit.name} via ${result.provider}: ${result.error}`);
+          errors.push(`${habit.name} (${result.provider}): ${result.error}`);
         }
       } catch (emailError) {
         console.error(`Failed to send email for ${habit.name}:`, emailError);
