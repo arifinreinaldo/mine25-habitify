@@ -11,7 +11,8 @@
       "Bash(npx web-push generate-vapid-keys)",
       "Bash(ls:*)",
       "Bash(npx tsc:*)",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "Bash(npx eslint:*)"
     ]
   }
 }

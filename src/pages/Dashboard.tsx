@@ -87,6 +87,33 @@ export default function Dashboard() {
             });
             setProgressValues(progressMap);
             setCompletionNotes(notesMap);
+
+            // Fetch completion history for streak calculation (last 365 days)
+            const yearAgo = format(subDays(new Date(), 365), 'yyyy-MM-dd');
+            const { data: historyData, error: historyError } = await supabase
+                .from('completions')
+                .select('habit_id, completed_at')
+                .eq('user_id', user!.id)
+                .gte('completed_at', yearAgo);
+
+            if (historyError) throw historyError;
+
+            // Group completion dates by habit_id
+            const completionsByHabit: Record<string, string[]> = {};
+            historyData?.forEach(c => {
+                if (!completionsByHabit[c.habit_id]) {
+                    completionsByHabit[c.habit_id] = [];
+                }
+                completionsByHabit[c.habit_id].push(c.completed_at);
+            });
+
+            // Calculate streaks for each habit
+            const streaks: Record<string, StreakData> = {};
+            habitsData?.forEach(habit => {
+                const dates = completionsByHabit[habit.id] || [];
+                streaks[habit.id] = calculateStreak(dates, habit.frequency_days || [], today);
+            });
+            setStreakData(streaks);
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
@@ -360,6 +387,7 @@ export default function Dashboard() {
                         onUpdateNotes={handleUpdateNotes}
                         onDelete={handleDeleteHabit}
                         onEdit={handleEditHabit}
+                        streakData={streakData}
                     />
 
                     <HabitList
@@ -373,6 +401,7 @@ export default function Dashboard() {
                         onUpdateNotes={handleUpdateNotes}
                         onDelete={handleDeleteHabit}
                         onEdit={handleEditHabit}
+                        streakData={streakData}
                     />
 
                     <HabitList
@@ -386,6 +415,7 @@ export default function Dashboard() {
                         onUpdateNotes={handleUpdateNotes}
                         onDelete={handleDeleteHabit}
                         onEdit={handleEditHabit}
+                        streakData={streakData}
                     />
 
                     <HabitList
@@ -399,6 +429,7 @@ export default function Dashboard() {
                         onUpdateNotes={handleUpdateNotes}
                         onDelete={handleDeleteHabit}
                         onEdit={handleEditHabit}
+                        streakData={streakData}
                     />
 
                     <HabitList
@@ -412,6 +443,7 @@ export default function Dashboard() {
                         onUpdateNotes={handleUpdateNotes}
                         onDelete={handleDeleteHabit}
                         onEdit={handleEditHabit}
+                        streakData={streakData}
                     />
 
                     <HabitList
@@ -425,6 +457,7 @@ export default function Dashboard() {
                         onUpdateNotes={handleUpdateNotes}
                         onDelete={handleDeleteHabit}
                         onEdit={handleEditHabit}
+                        streakData={streakData}
                     />
 
                     {todaysHabits.length === 0 && (
