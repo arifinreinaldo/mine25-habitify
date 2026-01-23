@@ -1,5 +1,6 @@
 import { Bell, Smartphone, Mail, Loader2 } from 'lucide-react';
-import { useNotificationPreferences, NotificationChannel } from '../hooks/useNotificationPreferences';
+import { useNotificationPreferences } from '../hooks/useNotificationPreferences';
+import type { NotificationChannel } from '../hooks/useNotificationPreferences';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { Switch } from './ui/switch';
 
