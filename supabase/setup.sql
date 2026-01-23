@@ -122,4 +122,58 @@ SELECT cron.schedule(
   ) AS request_id;
   $$
 );
+
+-- Schedule streak reminder function every 15 minutes (sends between 17:00-21:00 user local time)
+-- This sends Duolingo-style passive-aggressive reminders when streaks are at risk via ntfy
+SELECT cron.schedule(
+  'send-streak-reminders',
+  '*/15 * * * *',
+  $$
+  SELECT net.http_post(
+    url := 'YOUR_SUPABASE_URL/functions/v1/send-streak-reminders',
+    headers := '{"Content-Type": "application/json", "Authorization": "Bearer YOUR_ANON_KEY"}'::jsonb,
+    body := '{}'::jsonb
+  ) AS request_id;
+  $$
+);
+
+-- Schedule streak push notification reminder every 15 minutes (sends between 17:00-21:00 user local time)
+-- This sends Duolingo-style passive-aggressive reminders when streaks are at risk via Web Push
+SELECT cron.schedule(
+  'send-streak-push-notifications',
+  '*/15 * * * *',
+  $$
+  SELECT net.http_post(
+    url := 'YOUR_SUPABASE_URL/functions/v1/send-streak-push-notifications',
+    headers := '{"Content-Type": "application/json", "Authorization": "Bearer YOUR_ANON_KEY"}'::jsonb,
+    body := '{}'::jsonb
+  ) AS request_id;
+  $$
+);
 */
+
+-- 9. RPC FUNCTION: Fetch dashboard data in single call (habits + completions)
+-- This reduces API calls from 2 to 1 on dashboard load
+CREATE OR REPLACE FUNCTION get_dashboard_data(p_year_ago DATE)
+RETURNS JSON AS $$
+DECLARE
+  result JSON;
+BEGIN
+  SELECT json_build_object(
+    'habits', (
+      SELECT COALESCE(json_agg(h ORDER BY h.created_at), '[]'::json)
+      FROM habits h
+      WHERE h.user_id = auth.uid()
+        AND h.is_archived = false
+    ),
+    'completions', (
+      SELECT COALESCE(json_agg(c), '[]'::json)
+      FROM completions c
+      WHERE c.user_id = auth.uid()
+        AND c.completed_at >= p_year_ago
+    )
+  ) INTO result;
+  
+  RETURN result;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

@@ -57,50 +57,37 @@ export default function Dashboard() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            // Fetch Habits
-            const { data: habitsData, error: habitsError } = await supabase
-                .from('habits')
-                .select('*')
-                .eq('user_id', user!.id)
-                .eq('is_archived', false)
-                .order('created_at', { ascending: true });
+            const yearAgo = format(subDays(new Date(), 365), 'yyyy-MM-dd');
+            
+            // Single RPC call to fetch both habits and completions
+            const { data, error } = await supabase.rpc('get_dashboard_data', {
+                p_year_ago: yearAgo
+            });
 
-            if (habitsError) throw habitsError;
-            setHabits(habitsData || []);
+            if (error) throw error;
 
-            // Fetch Today's Completions
-            const { data: completionsData, error: completionsError } = await supabase
-                .from('completions')
-                .select('habit_id, value, notes')
-                .eq('user_id', user!.id)
-                .eq('completed_at', today);
+            const habitsData: Habit[] = data?.habits || [];
+            const allCompletions: { habit_id: string; completed_at: string; value: number; notes: string }[] = data?.completions || [];
 
-            if (completionsError) throw completionsError;
-            setCompletedIds(completionsData?.map(c => c.habit_id) || []);
+            setHabits(habitsData);
 
-            // Build progress values and notes maps
+            // Filter today's completions from the full dataset
+            const todayCompletions = allCompletions.filter(c => c.completed_at === today);
+            setCompletedIds(todayCompletions.map(c => c.habit_id));
+
+            // Build progress values and notes maps from today's data
             const progressMap: Record<string, number> = {};
             const notesMap: Record<string, string> = {};
-            completionsData?.forEach(c => {
+            todayCompletions.forEach(c => {
                 progressMap[c.habit_id] = c.value || 1;
                 if (c.notes) notesMap[c.habit_id] = c.notes;
             });
             setProgressValues(progressMap);
             setCompletionNotes(notesMap);
 
-            // Fetch completion history for streak calculation (last 365 days)
-            const yearAgo = format(subDays(new Date(), 365), 'yyyy-MM-dd');
-            const { data: historyData, error: historyError } = await supabase
-                .from('completions')
-                .select('habit_id, completed_at')
-                .eq('user_id', user!.id)
-                .gte('completed_at', yearAgo);
-
-            if (historyError) throw historyError;
-
-            // Group completion dates by habit_id
+            // Group completion dates by habit_id for streak calculation
             const completionsByHabit: Record<string, string[]> = {};
-            historyData?.forEach(c => {
+            allCompletions.forEach(c => {
                 if (!completionsByHabit[c.habit_id]) {
                     completionsByHabit[c.habit_id] = [];
                 }
@@ -109,7 +96,7 @@ export default function Dashboard() {
 
             // Calculate streaks for each habit
             const streaks: Record<string, StreakData> = {};
-            habitsData?.forEach(habit => {
+            habitsData.forEach(habit => {
                 const dates = completionsByHabit[habit.id] || [];
                 streaks[habit.id] = calculateStreak(dates, habit.frequency_days || [], today);
             });
