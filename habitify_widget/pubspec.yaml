@@ -1,0 +1,42 @@
+name: habitify_widget
+description: Habitify Android home screen widget with Supabase integration.
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.1.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Supabase
+  supabase_flutter: ^2.0.0
+
+  # Widget support
+  home_widget: ^0.4.0
+
+  # Background tasks
+  workmanager: ^0.5.0
+
+  # Local storage
+  shared_preferences: ^2.2.0
+  flutter_secure_storage: ^9.0.0
+
+  # HTTP & serialization
+  http: ^1.1.0
+  json_serializable: ^6.7.0
+
+  # Utilities
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^3.0.0
+  build_runner: ^2.4.0
+
+flutter:
+  uses-material-design: true

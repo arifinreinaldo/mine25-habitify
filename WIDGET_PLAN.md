@@ -2,12 +2,11 @@
 
 > Created: 2026-01-23
 > Status: Planning
+> Platform: Android only
 
 ## Overview
 
 Create a Duolingo-style Android home screen widget that displays habit progress and streak information, fetching data from Supabase.
-
-**Note:** iOS widget support will be added after Android widget is fully stable.
 
 ## Widget Preview
 
@@ -153,11 +152,12 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 - [ ] Setup secure token storage
 - [ ] Basic app with login flow
 
-### Phase 2: Widget UI (2 hours)
+### Phase 3: Widget UI (2 hours)
 - [ ] Create widget XML layout
 - [ ] Implement HabitWidgetProvider.kt
 - [ ] Register widget in AndroidManifest.xml
 - [ ] Basic static widget display
+- [ ] Create widget drawable resources (background, progress bar)
 
 ### Phase 3: Data Integration (2 hours)
 - [ ] Implement Supabase service
