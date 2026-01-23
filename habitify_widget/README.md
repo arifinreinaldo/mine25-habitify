@@ -27,3 +27,4 @@ flutter run
 3. Build native Kotlin widget provider
 4. Create widget UI drawables (backgrounds, progress bar)
 5. Test on Android device
+ko
