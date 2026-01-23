@@ -123,7 +123,7 @@ SELECT cron.schedule(
   $$
 );
 
--- Schedule streak reminder function every 15 minutes (sends between 17:00-21:00 user local time)
+-- Schedule streak reminder function every 15 minutes (sends between 18:00-23:00 user local time)
 -- This sends Duolingo-style passive-aggressive reminders when streaks are at risk via ntfy
 SELECT cron.schedule(
   'send-streak-reminders',
@@ -137,7 +137,7 @@ SELECT cron.schedule(
   $$
 );
 
--- Schedule streak push notification reminder every 15 minutes (sends between 17:00-21:00 user local time)
+-- Schedule streak push notification reminder every 15 minutes (sends between 18:00-23:00 user local time)
 -- This sends Duolingo-style passive-aggressive reminders when streaks are at risk via Web Push
 SELECT cron.schedule(
   'send-streak-push-notifications',

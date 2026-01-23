@@ -91,18 +91,18 @@ function getRandomMessage(streak: number, incompleteCount: number, isUrgent: boo
     .replace(/{count}/g, incompleteCount.toString());
 }
 
-// Generate a random time between 17:00-21:00 for each user
+// Generate a random time between 18:00-23:00 for each user
 // We check if current time is within a 15-minute window of the generated time
 function shouldSendNotification(userId: string, currentHour: number, currentMinute: number): boolean {
-  // Only send between 17:00 and 21:00
-  if (currentHour < 17 || currentHour >= 21) {
+  // Only send between 18:00 and 23:00
+  if (currentHour < 18 || currentHour >= 23) {
     return false;
   }
 
   // Use user ID to generate a pseudo-random but consistent time for this user
   // This ensures the same user gets reminded at roughly the same time each day
   const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const userHour = 17 + (hash % 4); // 17, 18, 19, or 20
+  const userHour = 18 + (hash % 5); // 18, 19, 20, 21, or 22
   const userMinute = (hash * 7) % 60; // 0-59
 
   // Check if we're within a 15-minute window of the user's assigned time
@@ -365,8 +365,8 @@ Deno.serve(async (req) => {
       // Generate user's topic
       const userTopic = getUserTopic(ntfyTopic, profile.email);
 
-      // Determine urgency (after 20:00 is urgent)
-      const isUrgent = userHour >= 20;
+      // Determine urgency (after 21:00 is urgent)
+      const isUrgent = userHour >= 21;
 
       // Generate message
       const message = getRandomMessage(maxStreak, incompleteHabits.length, isUrgent);

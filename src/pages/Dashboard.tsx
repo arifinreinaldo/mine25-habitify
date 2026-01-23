@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../features/auth/AuthContext';
 import { HabitDialog } from '../components/habits/HabitDialog';
@@ -14,36 +14,37 @@ import { Loader2, LogOut, Plus, Settings, Edit, Trash2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
+// Memoize today's date to avoid recalculating on every render
+const today = format(new Date(), 'yyyy-MM-dd');
+const todayDayOfWeek = new Date().getDay();
+
 export default function Dashboard() {
     const { user, signOut } = useAuth();
     const navigate = useNavigate();
     const [habits, setHabits] = useState<Habit[]>([]);
-    const [completedIds, setCompletedIds] = useState<string[]>([]);
-    const [progressValues, setProgressValues] = useState<Record<string, number>>({}); // habitId -> current value
-    const [completionNotes, setCompletionNotes] = useState<Record<string, string>>({}); // habitId -> notes
-    const [streakData, setStreakData] = useState<Record<string, StreakData>>({}); // habitId -> streak info
+    const [completedIds, setCompletedIds] = useState<Set<string>>(new Set()); // Use Set for O(1) lookup
+    const [progressValues, setProgressValues] = useState<Record<string, number>>({});
+    const [completionNotes, setCompletionNotes] = useState<Record<string, string>>({});
+    const [streakData, setStreakData] = useState<Record<string, StreakData>>({});
     const [loading, setLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
+    const [showUpcoming, setShowUpcoming] = useState(false);
 
-    const today = format(new Date(), 'yyyy-MM-dd');
-    const todayDayOfWeek = new Date().getDay(); // 0 = Sunday, 6 = Saturday
-
-    // Filter habits to only show those scheduled for today
-    // Handle both number[] and string[] from Supabase
-    const todaysHabits = habits.filter(h => {
+    // Memoize filtered habits to avoid re-filtering on every render
+    const todaysHabits = useMemo(() => habits.filter(h => {
         if (!h.frequency_days || h.frequency_days.length === 0) return true;
         return h.frequency_days.some(d => Number(d) === todayDayOfWeek);
-    });
+    }), [habits]);
 
-    // Habits not scheduled for today (upcoming)
-    const upcomingHabits = habits.filter(h => {
+    const upcomingHabits = useMemo(() => habits.filter(h => {
         if (!h.frequency_days || h.frequency_days.length === 0) return false;
         return !h.frequency_days.some(d => Number(d) === todayDayOfWeek);
-    });
+    }), [habits]);
 
-    const [showUpcoming, setShowUpcoming] = useState(false);
+    // Convert Set to array for HabitList (which expects string[])
+    const completedIdsArray = useMemo(() => Array.from(completedIds), [completedIds]);
 
     useEffect(() => {
         if (user) {
@@ -73,7 +74,7 @@ export default function Dashboard() {
 
             // Filter today's completions from the full dataset
             const todayCompletions = allCompletions.filter(c => c.completed_at === today);
-            setCompletedIds(todayCompletions.map(c => c.habit_id));
+            setCompletedIds(new Set(todayCompletions.map(c => c.habit_id)));
 
             // Build progress values and notes maps from today's data
             const progressMap: Record<string, number> = {};
@@ -138,13 +139,19 @@ export default function Dashboard() {
         }
     };
 
-    const handleToggleHabit = async (habitId: string) => {
-        const isCompleted = completedIds.includes(habitId);
+    const handleToggleHabit = useCallback(async (habitId: string) => {
+        const isCompleted = completedIds.has(habitId);
 
-        // Optimistic Update
-        setCompletedIds(prev =>
-            isCompleted ? prev.filter(id => id !== habitId) : [...prev, habitId]
-        );
+        // Optimistic Update with Set
+        setCompletedIds(prev => {
+            const next = new Set(prev);
+            if (isCompleted) {
+                next.delete(habitId);
+            } else {
+                next.add(habitId);
+            }
+            return next;
+        });
 
         try {
             if (isCompleted) {
@@ -177,24 +184,34 @@ export default function Dashboard() {
         } catch (error) {
             console.error('Error toggling habit:', error);
             // Revert on error
-            setCompletedIds(prev =>
-                isCompleted ? [...prev, habitId] : prev.filter(id => id !== habitId)
-            );
+            setCompletedIds(prev => {
+                const next = new Set(prev);
+                if (isCompleted) {
+                    next.add(habitId);
+                } else {
+                    next.delete(habitId);
+                }
+                return next;
+            });
         }
-    };
+    }, [completedIds, user]);
 
-    const handleUpdateProgress = async (habitId: string, newValue: number) => {
+    const handleUpdateProgress = useCallback(async (habitId: string, newValue: number) => {
         const habit = habits.find(h => h.id === habitId);
         if (!habit) return;
 
         const target = habit.frequency_target || 1;
         const clampedValue = Math.max(0, Math.min(newValue, target));
         const previousValue = progressValues[habitId] || 0;
-        const wasCompleted = completedIds.includes(habitId);
+        const wasCompleted = completedIds.has(habitId);
 
         // Optimistic update
         if (clampedValue === 0) {
-            setCompletedIds(prev => prev.filter(id => id !== habitId));
+            setCompletedIds(prev => {
+                const next = new Set(prev);
+                next.delete(habitId);
+                return next;
+            });
             setProgressValues(prev => {
                 const newValues = { ...prev };
                 delete newValues[habitId];
@@ -202,7 +219,11 @@ export default function Dashboard() {
             });
         } else {
             if (!wasCompleted) {
-                setCompletedIds(prev => [...prev, habitId]);
+                setCompletedIds(prev => {
+                    const next = new Set(prev);
+                    next.add(habitId);
+                    return next;
+                });
             }
             setProgressValues(prev => ({ ...prev, [habitId]: clampedValue }));
         }
@@ -240,7 +261,11 @@ export default function Dashboard() {
             console.error('Error updating progress:', error);
             // Revert on error
             if (previousValue === 0) {
-                setCompletedIds(prev => prev.filter(id => id !== habitId));
+                setCompletedIds(prev => {
+                    const next = new Set(prev);
+                    next.delete(habitId);
+                    return next;
+                });
                 setProgressValues(prev => {
                     const newValues = { ...prev };
                     delete newValues[habitId];
@@ -248,14 +273,18 @@ export default function Dashboard() {
                 });
             } else {
                 if (!wasCompleted) {
-                    setCompletedIds(prev => prev.filter(id => id !== habitId));
+                    setCompletedIds(prev => {
+                        const next = new Set(prev);
+                        next.delete(habitId);
+                        return next;
+                    });
                 }
                 setProgressValues(prev => ({ ...prev, [habitId]: previousValue }));
             }
         }
-    };
+    }, [habits, progressValues, completedIds, user]);
 
-    const handleUpdateNotes = async (habitId: string, notes: string) => {
+    const handleUpdateNotes = useCallback(async (habitId: string, notes: string) => {
         const previousNotes = completionNotes[habitId] || '';
 
         // Optimistic update
@@ -290,9 +319,9 @@ export default function Dashboard() {
                 });
             }
         }
-    };
+    }, [completionNotes]);
 
-    const handleDeleteHabit = async (habitId: string) => {
+    const handleDeleteHabit = useCallback(async (habitId: string) => {
         if (!confirm('Are you sure you want to delete this habit?')) return;
 
         // Optimistic Update
@@ -309,12 +338,12 @@ export default function Dashboard() {
             console.error('Error deleting habit:', error);
             fetchData(); // Sync on error
         }
-    };
+    }, []);
 
-    const handleEditHabit = (habit: Habit) => {
+    const handleEditHabit = useCallback((habit: Habit) => {
         setEditingHabit(habit);
         setIsDialogOpen(true);
-    };
+    }, []);
 
     const handleSignOut = async () => {
         await signOut();
@@ -352,11 +381,11 @@ export default function Dashboard() {
                 {/* Stats Overview (Simplified for now) */}
                 <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/10">
-                        <div className="text-2xl font-bold text-primary">{completedIds.filter(id => todaysHabits.some(h => h.id === id)).length}/{todaysHabits.length}</div>
+                        <div className="text-2xl font-bold text-primary">{todaysHabits.filter(h => completedIds.has(h.id)).length}/{todaysHabits.length}</div>
                         <div className="text-xs text-muted-foreground uppercase font-semibold">Completed Today</div>
                     </div>
                     <div className="p-4 rounded-xl bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/10">
-                        <div className="text-2xl font-bold text-green-500">{Math.round((completedIds.filter(id => todaysHabits.some(h => h.id === id)).length / (todaysHabits.length || 1)) * 100)}%</div>
+                        <div className="text-2xl font-bold text-green-500">{Math.round((todaysHabits.filter(h => completedIds.has(h.id)).length / (todaysHabits.length || 1)) * 100)}%</div>
                         <div className="text-xs text-muted-foreground uppercase font-semibold">Rate</div>
                     </div>
                 </div>
@@ -366,7 +395,7 @@ export default function Dashboard() {
                     <HabitList
                         title="🌅 Early Morning"
                         habits={todaysHabits.filter(h => h.time_of_day === 'early_morning')}
-                        completedHabitIds={completedIds}
+                        completedHabitIds={completedIdsArray}
                         progressValues={progressValues}
                         completionNotes={completionNotes}
                         onToggle={handleToggleHabit}
@@ -380,7 +409,7 @@ export default function Dashboard() {
                     <HabitList
                         title="☀️ Morning"
                         habits={todaysHabits.filter(h => h.time_of_day === 'morning')}
-                        completedHabitIds={completedIds}
+                        completedHabitIds={completedIdsArray}
                         progressValues={progressValues}
                         completionNotes={completionNotes}
                         onToggle={handleToggleHabit}
@@ -394,7 +423,7 @@ export default function Dashboard() {
                     <HabitList
                         title="🌤️ Afternoon"
                         habits={todaysHabits.filter(h => h.time_of_day === 'afternoon')}
-                        completedHabitIds={completedIds}
+                        completedHabitIds={completedIdsArray}
                         progressValues={progressValues}
                         completionNotes={completionNotes}
                         onToggle={handleToggleHabit}
@@ -408,7 +437,7 @@ export default function Dashboard() {
                     <HabitList
                         title="🌆 Evening"
                         habits={todaysHabits.filter(h => h.time_of_day === 'evening')}
-                        completedHabitIds={completedIds}
+                        completedHabitIds={completedIdsArray}
                         progressValues={progressValues}
                         completionNotes={completionNotes}
                         onToggle={handleToggleHabit}
@@ -422,7 +451,7 @@ export default function Dashboard() {
                     <HabitList
                         title="⏰ Custom"
                         habits={todaysHabits.filter(h => h.time_of_day === 'custom')}
-                        completedHabitIds={completedIds}
+                        completedHabitIds={completedIdsArray}
                         progressValues={progressValues}
                         completionNotes={completionNotes}
                         onToggle={handleToggleHabit}
@@ -436,7 +465,7 @@ export default function Dashboard() {
                     <HabitList
                         title="🚫 No Reminder"
                         habits={todaysHabits.filter(h => h.time_of_day === 'anytime')}
-                        completedHabitIds={completedIds}
+                        completedHabitIds={completedIdsArray}
                         progressValues={progressValues}
                         completionNotes={completionNotes}
                         onToggle={handleToggleHabit}

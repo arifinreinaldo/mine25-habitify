@@ -92,14 +92,14 @@ function getRandomMessage(streak: number, incompleteCount: number, isUrgent: boo
     .replace(/{count}/g, incompleteCount.toString());
 }
 
-// Generate a pseudo-random time between 17:00-21:00 for each user
+// Generate a pseudo-random time between 18:00-23:00 for each user
 function shouldSendNotification(userId: string, currentHour: number, currentMinute: number): boolean {
-  if (currentHour < 17 || currentHour >= 21) {
+  if (currentHour < 18 || currentHour >= 23) {
     return false;
   }
 
   const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const userHour = 17 + (hash % 4);
+  const userHour = 18 + (hash % 5); // 18, 19, 20, 21, or 22
   const userMinute = (hash * 7) % 60;
 
   const currentTotalMinutes = currentHour * 60 + currentMinute;
@@ -363,7 +363,8 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      const isUrgent = userHour >= 20;
+      // Determine urgency (after 21:00 is urgent)
+      const isUrgent = userHour >= 21;
       const message = getRandomMessage(maxStreak, incompleteHabits.length, isUrgent);
       const title = `${habitWithMaxStreak.icon} Your ${maxStreak} day streak is in danger!`;
 

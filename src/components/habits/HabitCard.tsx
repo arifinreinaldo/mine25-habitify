@@ -21,7 +21,7 @@ interface HabitCardProps {
     streak?: StreakData;
 }
 
-export const HabitCard: React.FC<HabitCardProps> = ({
+const HabitCardComponent: React.FC<HabitCardProps> = ({
     habit,
     isCompleted,
     currentValue,
@@ -217,3 +217,6 @@ export const HabitCard: React.FC<HabitCardProps> = ({
         </Card>
     );
 };
+
+// Memoize to prevent re-renders when parent state changes but this card's props don't
+export const HabitCard = React.memo(HabitCardComponent);
