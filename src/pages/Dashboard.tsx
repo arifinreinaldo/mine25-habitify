@@ -29,9 +29,11 @@ export default function Dashboard() {
     const todayDayOfWeek = new Date().getDay(); // 0 = Sunday, 6 = Saturday
 
     // Filter habits to only show those scheduled for today
-    const todaysHabits = habits.filter(h =>
-        h.frequency_days?.includes(todayDayOfWeek) ?? true
-    );
+    // Handle both number[] and string[] from Supabase
+    const todaysHabits = habits.filter(h => {
+        if (!h.frequency_days || h.frequency_days.length === 0) return true;
+        return h.frequency_days.some(d => Number(d) === todayDayOfWeek);
+    });
 
     useEffect(() => {
         if (user) {
