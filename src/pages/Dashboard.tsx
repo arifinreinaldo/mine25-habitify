@@ -35,6 +35,14 @@ export default function Dashboard() {
         return h.frequency_days.some(d => Number(d) === todayDayOfWeek);
     });
 
+    // Habits not scheduled for today (upcoming)
+    const upcomingHabits = habits.filter(h => {
+        if (!h.frequency_days || h.frequency_days.length === 0) return false;
+        return !h.frequency_days.some(d => Number(d) === todayDayOfWeek);
+    });
+
+    const [showUpcoming, setShowUpcoming] = useState(false);
+
     useEffect(() => {
         if (user) {
             fetchData();
@@ -420,6 +428,40 @@ export default function Dashboard() {
                     {todaysHabits.length === 0 && (
                         <div className="text-center py-10 text-muted">
                             <p>{habits.length === 0 ? 'No habits yet. Start small!' : 'No habits scheduled for today!'}</p>
+                        </div>
+                    )}
+
+                    {/* Upcoming Habits (collapsible) */}
+                    {upcomingHabits.length > 0 && (
+                        <div className="pt-4 border-t border-muted/20">
+                            <button
+                                onClick={() => setShowUpcoming(!showUpcoming)}
+                                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-text transition-colors"
+                            >
+                                <span className={`transition-transform ${showUpcoming ? 'rotate-90' : ''}`}>▶</span>
+                                <span>Upcoming ({upcomingHabits.length})</span>
+                            </button>
+                            {showUpcoming && (
+                                <div className="mt-4 opacity-60">
+                                    {upcomingHabits.map(habit => (
+                                        <div key={habit.id} className="py-2 px-3 rounded-lg bg-surface/50 mb-2 flex items-center gap-3">
+                                            <span className="text-xl">{habit.icon}</span>
+                                            <div className="flex-1">
+                                                <div className="font-medium text-sm">{habit.name}</div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    {habit.frequency_days?.map(d => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][Number(d)]).join(', ')}
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => handleEditHabit(habit)}
+                                                className="text-xs text-muted-foreground hover:text-primary"
+                                            >
+                                                Edit
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
