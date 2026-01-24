@@ -28,7 +28,7 @@
             android:text="3 day streak"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:marginStart="8dp"
+            android:layout_marginStart="8dp"
             android:textColor="#FFFFFF" />
     </LinearLayout>
 
@@ -37,7 +37,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:marginTop="12dp">
+        android:layout_marginTop="12dp">
 
         <TextView
             android:id="@+id/progress_text"
@@ -46,7 +46,7 @@
             android:text="Today: 2/5 habits"
             android:textSize="14sp"
             android:textColor="#E8E8E8"
-            android:marginBottom="4dp" />
+            android:layout_marginBottom="4dp" />
 
         <ProgressBar
             android:id="@+id/progress_bar"
@@ -66,7 +66,7 @@
         android:text="⚠️ Don't break your streak!"
         android:textSize="12sp"
         android:textColor="#FFE8B6"
-        android:marginTop="12dp"
+        android:layout_marginTop="12dp"
         android:gravity="center"
         android:textStyle="italic" />
 
