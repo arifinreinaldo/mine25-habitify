@@ -127,6 +127,7 @@ interface Habit {
   icon: string;
   user_id: string;
   reminder_time: string;
+  frequency_days: number[] | null;
 }
 
 interface Profile {
@@ -263,7 +264,7 @@ Deno.serve(async (req) => {
     // Query ALL habits with reminders (we'll filter by timezone later)
     const { data: habits, error: habitsError } = await supabase
       .from("habits")
-      .select("id, name, icon, user_id, reminder_time")
+      .select("id, name, icon, user_id, reminder_time, frequency_days")
       .not("reminder_time", "is", null)
       .eq("is_archived", false);
 
@@ -332,6 +333,15 @@ Deno.serve(async (req) => {
 
       // Get today's date in user's timezone
       const today = userLocalTime.toISOString().split("T")[0];
+      const todayDayOfWeek = userLocalTime.getDay();
+
+      // Check if habit is scheduled for today
+      if (habit.frequency_days && habit.frequency_days.length > 0 && habit.frequency_days.length < 7) {
+        if (!habit.frequency_days.some(d => Number(d) === todayDayOfWeek)) {
+          console.log(`Habit ${habit.name} not scheduled for today (day ${todayDayOfWeek}), skipping`);
+          continue;
+        }
+      }
 
       // Check if habit was already completed today
       const { data: completion } = await supabase
