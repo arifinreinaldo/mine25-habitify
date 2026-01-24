@@ -3,13 +3,23 @@ import '../models/widget_data.dart';
 
 /// Supabase API service for widget data
 class SupabaseService {
-  late final Supabase _supabase;
+  Supabase? _supabase;
   bool _initialized = false;
 
   bool get isInitialized => _initialized;
 
+  void _ensureInitialized() {
+    if (!_initialized || _supabase == null) {
+      throw StateError('SupabaseService not initialized. Call initialize() first.');
+    }
+  }
+
   Future<void> initialize(String url, String anonKey) async {
     if (_initialized) return;
+
+    if (url.isEmpty || anonKey.isEmpty) {
+      throw ArgumentError('Supabase URL and anon key must not be empty');
+    }
 
     await Supabase.initialize(
       url: url,
@@ -21,19 +31,26 @@ class SupabaseService {
 
   /// Set session from access and refresh tokens (for deep link auth)
   Future<void> setSession(String accessToken, String refreshToken) async {
+    _ensureInitialized();
     try {
-      await _supabase.client.auth.setSession(accessToken);
+      await _supabase!.client.auth.setSession(accessToken);
     } catch (e) {
       // If setSession fails, try to recover the session
-      await _supabase.client.auth.recoverSession('$accessToken:$refreshToken');
+      try {
+        await _supabase!.client.auth.recoverSession('$accessToken:$refreshToken');
+      } catch (e2) {
+        print('Failed to set or recover session: $e2');
+        rethrow;
+      }
     }
   }
 
   /// Fetch widget data from Supabase
   /// Uses the get_widget_data() RPC function
   Future<WidgetData> fetchWidgetData() async {
+    _ensureInitialized();
     try {
-      final response = await _supabase.client.rpc('get_widget_data');
+      final response = await _supabase!.client.rpc('get_widget_data');
       if (response == null) {
         return WidgetData.empty();
       }
@@ -46,9 +63,10 @@ class SupabaseService {
 
   /// Fetch dashboard data (habits + completions)
   Future<Map<String, dynamic>> fetchDashboardData() async {
+    _ensureInitialized();
     try {
       final oneYearAgo = DateTime.now().subtract(Duration(days: 365));
-      final response = await _supabase.client.rpc(
+      final response = await _supabase!.client.rpc(
         'get_dashboard_data',
         params: {'p_year_ago': oneYearAgo.toString().split(' ')[0]},
       );
@@ -60,13 +78,18 @@ class SupabaseService {
   }
 
   bool isAuthenticated() {
-    return _supabase.client.auth.currentSession != null;
+    if (!_initialized || _supabase == null) return false;
+    return _supabase!.client.auth.currentSession != null;
   }
 
   String? getCurrentUserId() {
-    return _supabase.client.auth.currentUser?.id;
+    if (!_initialized || _supabase == null) return null;
+    return _supabase!.client.auth.currentUser?.id;
   }
 
   /// Get the Supabase client instance
-  SupabaseClient get client => _supabase.client;
+  SupabaseClient get client {
+    _ensureInitialized();
+    return _supabase!.client;
+  }
 }

@@ -1,18 +1,18 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:app_links/app_links.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:workmanager/workmanager.dart';
-import 'package:home_widget/home_widget.dart';
 import 'services/supabase_service.dart';
 import 'services/widget_service.dart';
 
-// Supabase configuration - replace with your actual values
-const supabaseUrl = String.fromEnvironment('SUPABASE_URL', defaultValue: '');
-const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: '');
-
 // WorkManager task name
 const widgetUpdateTask = 'habitify_widget_update';
+
+// Global getters for Supabase config from .env
+String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
+String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
 
 /// WorkManager callback dispatcher - runs in background isolate
 @pragma('vm:entry-point')
@@ -20,9 +20,20 @@ void callbackDispatcher() {
   Workmanager().executeTask((taskName, inputData) async {
     if (taskName == widgetUpdateTask) {
       try {
+        // Load env in background isolate
+        await dotenv.load(fileName: '.env');
+
+        final url = dotenv.env['SUPABASE_URL'] ?? '';
+        final anonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
+
+        if (url.isEmpty || anonKey.isEmpty) {
+          print('WorkManager: Supabase credentials not configured');
+          return false;
+        }
+
         // Initialize Supabase in background
         final supabaseService = SupabaseService();
-        await supabaseService.initialize(supabaseUrl, supabaseAnonKey);
+        await supabaseService.initialize(url, anonKey);
 
         // Try to restore session from secure storage
         const storage = FlutterSecureStorage();
@@ -50,6 +61,9 @@ void callbackDispatcher() {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Load environment variables from .env file
+  await dotenv.load(fileName: '.env');
 
   // Initialize WorkManager for background updates
   await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
@@ -99,6 +113,7 @@ class _MainScreenState extends State<MainScreen> {
 
   bool _isLoading = true;
   bool _isAuthenticated = false;
+  bool _isConfigured = false;
   String? _statusMessage;
   String? _errorMessage;
 
@@ -116,10 +131,19 @@ class _MainScreenState extends State<MainScreen> {
 
   Future<void> _initializeApp() async {
     try {
-      // Initialize Supabase
-      if (supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty) {
-        await _supabaseService.initialize(supabaseUrl, supabaseAnonKey);
+      // Check if Supabase credentials are configured
+      if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
+        setState(() {
+          _isConfigured = false;
+          _errorMessage = 'Supabase not configured. Build with:\nflutter build apk --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...';
+          _isLoading = false;
+        });
+        return;
       }
+
+      // Initialize Supabase
+      await _supabaseService.initialize(supabaseUrl, supabaseAnonKey);
+      _isConfigured = true;
 
       // Set up deep link handling
       _appLinks = AppLinks();
@@ -155,6 +179,14 @@ class _MainScreenState extends State<MainScreen> {
     print('Received deep link: $uri');
 
     if (uri.scheme == 'habitify' && uri.host == 'auth') {
+      // Check if Supabase is configured
+      if (!_isConfigured) {
+        setState(() {
+          _errorMessage = 'Cannot authenticate: Supabase not configured';
+        });
+        return;
+      }
+
       setState(() {
         _isLoading = true;
         _statusMessage = 'Authenticating...';
@@ -206,6 +238,8 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _restoreSession() async {
+    if (!_isConfigured) return;
+
     try {
       final accessToken = await _secureStorage.read(key: 'access_token');
       final refreshToken = await _secureStorage.read(key: 'refresh_token');
@@ -225,6 +259,10 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _fetchAndUpdateWidget() async {
+    if (!_isConfigured) {
+      throw Exception('Supabase not configured');
+    }
+
     try {
       final data = await _supabaseService.fetchWidgetData();
       await WidgetService.updateWidget(data);
@@ -281,15 +319,27 @@ class _MainScreenState extends State<MainScreen> {
             children: [
               // Status icon
               Icon(
-                _isAuthenticated ? Icons.check_circle : Icons.link,
+                !_isConfigured
+                    ? Icons.warning
+                    : _isAuthenticated
+                        ? Icons.check_circle
+                        : Icons.link,
                 size: 80,
-                color: _isAuthenticated ? Colors.green : Colors.grey,
+                color: !_isConfigured
+                    ? Colors.orange
+                    : _isAuthenticated
+                        ? Colors.green
+                        : Colors.grey,
               ),
               const SizedBox(height: 24),
 
               // Title
               Text(
-                _isAuthenticated ? 'Widget Connected!' : 'Connect Your Widget',
+                !_isConfigured
+                    ? 'Configuration Required'
+                    : _isAuthenticated
+                        ? 'Widget Connected!'
+                        : 'Connect Your Widget',
                 style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
@@ -297,9 +347,11 @@ class _MainScreenState extends State<MainScreen> {
 
               // Instructions
               Text(
-                _isAuthenticated
-                    ? 'Your widget is syncing with Habitify.\nAdd it to your home screen!'
-                    : 'Open Habitify in your browser and tap\n"Connect Android Widget" in Settings.',
+                !_isConfigured
+                    ? 'The app needs to be built with Supabase credentials.'
+                    : _isAuthenticated
+                        ? 'Your widget is syncing with Habitify.\nAdd it to your home screen!'
+                        : 'Open Habitify in your browser and tap\n"Connect Android Widget" in Settings.',
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.grey[600],
@@ -332,20 +384,22 @@ class _MainScreenState extends State<MainScreen> {
               if (_errorMessage != null)
                 Container(
                   padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(top: 8),
                   decoration: BoxDecoration(
                     color: Colors.red[50],
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     _errorMessage!,
-                    style: TextStyle(color: Colors.red[700]),
+                    style: TextStyle(color: Colors.red[700], fontSize: 12),
+                    textAlign: TextAlign.center,
                   ),
                 ),
 
               const SizedBox(height: 32),
 
               // Actions
-              if (_isAuthenticated && !_isLoading) ...[
+              if (_isAuthenticated && !_isLoading && _isConfigured) ...[
                 ElevatedButton.icon(
                   onPressed: _refreshWidget,
                   icon: const Icon(Icons.refresh),
@@ -361,13 +415,14 @@ class _MainScreenState extends State<MainScreen> {
               const Spacer(),
 
               // Help text
-              Text(
-                'Widget updates automatically every 15 minutes',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[400],
+              if (_isConfigured)
+                Text(
+                  'Widget updates automatically every 15 minutes',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[400],
+                  ),
                 ),
-              ),
             ],
           ),
         ),
