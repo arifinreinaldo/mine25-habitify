@@ -33,15 +33,11 @@ class SupabaseService {
   Future<void> setSession(String accessToken, String refreshToken) async {
     _ensureInitialized();
     try {
-      await _supabase!.client.auth.setSession(accessToken);
+      // Use refreshSession with the refresh token to get a valid session
+      await _supabase!.client.auth.refreshSession(refreshToken);
     } catch (e) {
-      // If setSession fails, try to recover the session
-      try {
-        await _supabase!.client.auth.recoverSession('$accessToken:$refreshToken');
-      } catch (e2) {
-        print('Failed to set or recover session: $e2');
-        rethrow;
-      }
+      print('refreshSession failed: $e');
+      rethrow;
     }
   }
 

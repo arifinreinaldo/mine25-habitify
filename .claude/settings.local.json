@@ -15,7 +15,8 @@
       "Bash(npx eslint:*)",
       "Bash(find:*)",
       "Bash(flutter pub get:*)",
-      "Bash(flutter build:*)"
+      "Bash(flutter build:*)",
+      "Bash(grep:*)"
     ]
   }
 }
