@@ -595,11 +595,11 @@ export default function Dashboard() {
 
             {/* Settings Dialog */}
             <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="sm:max-w-[425px] max-h-[85vh] flex flex-col">
                     <DialogHeader>
                         <DialogTitle>Settings</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4 py-4">
+                    <div className="space-y-4 py-4 overflow-y-auto flex-1">
                         <InstallPrompt />
                         <NotificationPreferences />
                         <NtfySettings />
