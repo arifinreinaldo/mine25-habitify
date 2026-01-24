@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:home_widget/home_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/widget_data.dart';
@@ -33,7 +34,7 @@ class WidgetService {
       // Request widget update
       await HomeWidget.updateWidget(
         name: 'HabitWidgetProvider',
-        androidName: 'com.habitify.widget.HabitWidgetProvider',
+        androidName: 'com.example.habitify_widget.HabitWidgetProvider',
       );
     } catch (e) {
       print('Error updating widget: $e');
@@ -67,13 +68,22 @@ class WidgetService {
     return age < Duration(hours: 1).inMilliseconds;
   }
 
-  // Simple serialization helpers
+  // Serialization helpers
   static String _widgetDataToJson(WidgetData data) {
-    return '''{"total_habits":${data.totalHabits},"completed_today":${data.completedToday},"current_streak":${data.currentStreak}}''';
+    return jsonEncode({
+      'total_habits': data.totalHabits,
+      'completed_today': data.completedToday,
+      'current_streak': data.currentStreak,
+    });
   }
 
-  static WidgetData _widgetDataFromJson(String json) {
-    // Simple JSON parsing (could use json package for robustness)
-    return WidgetData.empty();
+  static WidgetData _widgetDataFromJson(String jsonString) {
+    try {
+      final Map<String, dynamic> json = jsonDecode(jsonString);
+      return WidgetData.fromJson(json);
+    } catch (e) {
+      print('Error parsing widget data JSON: $e');
+      return WidgetData.empty();
+    }
   }
 }

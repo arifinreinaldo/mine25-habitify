@@ -10,9 +10,56 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/
 import type { Habit, StreakData } from '../types/habit';
 import { calculateStreak } from '../lib/streaks';
 import { format, subDays } from 'date-fns';
-import { Loader2, LogOut, Plus, Settings, Edit, Trash2 } from 'lucide-react';
+import { Loader2, LogOut, Plus, Settings, Edit, Trash2, Smartphone } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { useNavigate } from 'react-router-dom';
+
+// Android Widget Connection Component
+function AndroidWidgetConnect() {
+    const [isConnecting, setIsConnecting] = useState(false);
+
+    const connectWidget = async () => {
+        setIsConnecting(true);
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                const deepLink = `habitify://auth?access_token=${session.access_token}&refresh_token=${session.refresh_token}`;
+                window.location.href = deepLink;
+            }
+        } catch (error) {
+            console.error('Error connecting widget:', error);
+        } finally {
+            setIsConnecting(false);
+        }
+    };
+
+    return (
+        <div className="p-4 rounded-lg bg-surface border border-muted/20">
+            <div className="flex items-center gap-3 mb-3">
+                <Smartphone className="h-5 w-5 text-primary" />
+                <h3 className="font-semibold">Android Widget</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+                Add a home screen widget to track your habits on Android. Install the Habitify Widget app first.
+            </p>
+            <Button
+                onClick={connectWidget}
+                disabled={isConnecting}
+                variant="outline"
+                className="w-full"
+            >
+                {isConnecting ? (
+                    <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Connecting...
+                    </>
+                ) : (
+                    'Connect Android Widget'
+                )}
+            </Button>
+        </div>
+    );
+}
 
 // Memoize today's date to avoid recalculating on every render
 const today = format(new Date(), 'yyyy-MM-dd');
@@ -556,6 +603,7 @@ export default function Dashboard() {
                         <InstallPrompt />
                         <NotificationPreferences />
                         <NtfySettings />
+                        <AndroidWidgetConnect />
                     </div>
                 </DialogContent>
             </Dialog>

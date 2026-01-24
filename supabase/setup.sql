@@ -177,3 +177,33 @@ BEGIN
   RETURN result;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 10. RPC FUNCTION: Get widget data (streak, progress) for Android widget
+CREATE OR REPLACE FUNCTION get_widget_data()
+RETURNS JSON AS $$
+DECLARE
+  result JSON;
+  v_today DATE := CURRENT_DATE;
+BEGIN
+  SELECT json_build_object(
+    'total_habits', (
+      SELECT COUNT(*)::int FROM habits h
+      WHERE h.user_id = auth.uid() AND h.is_archived = false
+    ),
+    'completed_today', (
+      SELECT COUNT(DISTINCT habit_id)::int FROM completions c
+      WHERE c.user_id = auth.uid() AND c.completed_at = v_today
+    ),
+    'current_streak', (
+      -- Max consecutive days with at least one habit completed
+      SELECT COALESCE(MAX(streak), 0)::int FROM (
+        SELECT COUNT(*) as streak FROM (
+          SELECT completed_at, completed_at - (ROW_NUMBER() OVER (ORDER BY completed_at))::int AS grp
+          FROM (SELECT DISTINCT completed_at FROM completions WHERE user_id = auth.uid()) d
+        ) grouped GROUP BY grp
+      ) streaks
+    )
+  ) INTO result;
+  RETURN result;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

@@ -12,7 +12,9 @@
       "Bash(ls:*)",
       "Bash(npx tsc:*)",
       "Bash(npm run lint:*)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(find:*)",
+      "Bash(flutter pub get:*)"
     ]
   }
 }
