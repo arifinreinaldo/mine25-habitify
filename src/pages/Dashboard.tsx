@@ -23,7 +23,10 @@ function AndroidWidgetConnect() {
         try {
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
-                const deepLink = `habitify://auth?access_token=${session.access_token}&refresh_token=${session.refresh_token}`;
+                // URL encode the tokens to handle special characters
+                const encodedAccessToken = encodeURIComponent(session.access_token);
+                const encodedRefreshToken = encodeURIComponent(session.refresh_token);
+                const deepLink = `habitify://auth?access_token=${encodedAccessToken}&refresh_token=${encodedRefreshToken}`;
                 window.location.href = deepLink;
             }
         } catch (error) {
