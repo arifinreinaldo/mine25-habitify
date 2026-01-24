@@ -3,18 +3,63 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* Light Mode - iOS 26 Inspired */
+    --color-primary: 99 102 241;    /* Indigo 500 #6366f1 */
+    --color-secondary: 168 85 247;  /* Purple 500 #a855f7 */
+    --color-accent: 236 72 153;     /* Pink 500 #ec4899 */
+    
+    /* Vibrant, slightly off-white background */
+    --color-background: 242 244 246; /* Gray 100-ish */
+    --color-surface: 255 255 255;    /* White */
+    
+    --color-text: 28 28 30;          /* System Gray 6 (Dark) */
+    --color-muted: 142 142 147;      /* System Gray */
+    --color-muted-foreground: 100 116 139; /* Slate 500 */
+    
+    /* Semantic */
+    --color-success: 52 199 89;      /* iOS Green */
+    --color-warning: 255 149 0;      /* iOS Orange */
+    --color-destructive: 255 59 48;  /* iOS Red */
+  }
+
+  .dark {
+    /* Dark Mode - VisionOS Inspired */
+    --color-primary: 129 140 248;    /* Indigo 400 */
+    --color-secondary: 192 132 252;  /* Purple 400 */
+    --color-accent: 244 114 182;     /* Pink 400 */
+    
+    /* Deep, rich background */
+    --color-background: 0 0 0;       /* Pure Black for OLED/Depth */
+    --color-surface: 28 28 30;       /* System Gray 6 (Dark) */
+    
+    --color-text: 242 242 247;       /* System Gray 6 (Light) */
+    --color-muted: 142 142 147;      /* System Gray */
+    --color-muted-foreground: 148 163 184; /* Slate 400 */
+    
+    /* Semantic */
+    --color-success: 48 209 88;      /* iOS Green Dark */
+    --color-warning: 255 159 10;     /* iOS Orange Dark */
+    --color-destructive: 255 69 58;  /* iOS Red Dark */
+  }
+
   body {
-    @apply bg-background text-text font-sans antialiased;
+    @apply bg-background text-text font-sans antialiased selection:bg-primary/30 selection:text-primary;
+    /* iOS Momentum Scrolling */
+    -webkit-overflow-scrolling: touch;
   }
 }
 
-/* Custom Scrollbar for sleek look */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px; /* Thinner for mobile feel */
 }
 ::-webkit-scrollbar-track {
-  @apply bg-surface;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted/50 rounded-full hover:bg-muted;
+  @apply bg-muted/30 rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted/50;
 }

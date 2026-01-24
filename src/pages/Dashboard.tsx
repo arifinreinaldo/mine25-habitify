@@ -7,6 +7,7 @@ import { InstallPrompt } from '../components/InstallPrompt';
 import { NotificationPreferences } from '../components/NotificationPreferences';
 import { NtfySettings } from '../components/NtfySettings';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { ModeToggle } from '../components/mode-toggle';
 import type { Habit, StreakData } from '../types/habit';
 import { calculateStreak } from '../lib/streaks';
 import { format, subDays } from 'date-fns';
@@ -37,7 +38,7 @@ function AndroidWidgetConnect() {
     };
 
     return (
-        <div className="p-4 rounded-lg bg-surface border border-muted/20">
+        <div className="p-4 rounded-2xl bg-surface/50 border border-muted/20">
             <div className="flex items-center gap-3 mb-3">
                 <Smartphone className="h-5 w-5 text-primary" />
                 <h3 className="font-semibold">Android Widget</h3>
@@ -49,7 +50,7 @@ function AndroidWidgetConnect() {
                 onClick={connectWidget}
                 disabled={isConnecting}
                 variant="outline"
-                className="w-full"
+                className="w-full rounded-xl"
             >
                 {isConnecting ? (
                     <>
@@ -407,19 +408,20 @@ export default function Dashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-background text-text pb-20">
+        <div className="min-h-screen bg-background text-text pb-32">
             {/* Header */}
-            <header className="sticky top-0 z-10 border-b border-muted/20 bg-background/80 backdrop-blur-md">
+            <header className="sticky top-0 z-10 border-b border-white/5 bg-background/80 backdrop-blur-xl">
                 <div className="container mx-auto px-4 py-4 flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Hello, {user?.email?.split('@')[0]}!</h1>
                         <p className="text-sm text-muted">{format(new Date(), 'EEEE, MMMM do')}</p>
                     </div>
-                    <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(true)}>
+                    <div className="flex items-center gap-2">
+                        <ModeToggle />
+                        <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(true)} className="rounded-full">
                             <Settings className="h-5 w-5" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={handleSignOut}>
+                        <Button variant="ghost" size="icon" onClick={handleSignOut} className="rounded-full">
                             <LogOut className="h-5 w-5" />
                         </Button>
                     </div>
@@ -428,15 +430,21 @@ export default function Dashboard() {
 
             {/* Main Content */}
             <main className="container mx-auto px-4 py-8 space-y-8">
-                {/* Stats Overview (Simplified for now) */}
+                {/* Stats Overview */}
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/10">
-                        <div className="text-2xl font-bold text-primary">{todaysHabits.filter(h => completedIds.has(h.id)).length}/{todaysHabits.length}</div>
-                        <div className="text-xs text-muted-foreground uppercase font-semibold">Completed Today</div>
+                    <div className="p-4 rounded-3xl bg-surface/40 backdrop-blur-md border border-white/10 shadow-sm relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-primary/5 group-hover:bg-primary/10 transition-colors" />
+                        <div className="relative z-10">
+                            <div className="text-3xl font-bold text-primary">{todaysHabits.filter(h => completedIds.has(h.id)).length}/{todaysHabits.length}</div>
+                            <div className="text-xs text-muted-foreground uppercase font-semibold tracking-wider mt-1">Completed Today</div>
+                        </div>
                     </div>
-                    <div className="p-4 rounded-xl bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/10">
-                        <div className="text-2xl font-bold text-green-500">{Math.round((todaysHabits.filter(h => completedIds.has(h.id)).length / (todaysHabits.length || 1)) * 100)}%</div>
-                        <div className="text-xs text-muted-foreground uppercase font-semibold">Rate</div>
+                    <div className="p-4 rounded-3xl bg-surface/40 backdrop-blur-md border border-white/10 shadow-sm relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-success/5 group-hover:bg-success/10 transition-colors" />
+                        <div className="relative z-10">
+                            <div className="text-3xl font-bold text-success">{Math.round((todaysHabits.filter(h => completedIds.has(h.id)).length / (todaysHabits.length || 1)) * 100)}%</div>
+                            <div className="text-xs text-muted-foreground uppercase font-semibold tracking-wider mt-1">Completion Rate</div>
+                        </div>
                     </div>
                 </div>
 
@@ -545,7 +553,7 @@ export default function Dashboard() {
                             {showUpcoming && (
                                 <div className="mt-4 opacity-60">
                                     {upcomingHabits.map(habit => (
-                                        <div key={habit.id} className="py-2 px-3 rounded-lg bg-surface/50 mb-2 flex items-center gap-3">
+                                        <div key={habit.id} className="py-2 px-3 rounded-2xl bg-surface/50 mb-2 flex items-center gap-3">
                                             <span className="text-xl">{habit.icon}</span>
                                             <div className="flex-1">
                                                 <div className="font-medium text-sm">{habit.name}</div>
@@ -577,15 +585,15 @@ export default function Dashboard() {
             </main>
 
             {/* Floating Action Button */}
-            <div className="fixed bottom-6 right-6">
+            <div className="fixed bottom-8 right-6 z-50">
                 <Button
-                    className="gap-2 shadow-lg shadow-primary/20"
+                    className="gap-2 shadow-xl shadow-primary/25 rounded-full h-14 px-6 text-base font-semibold bg-primary hover:bg-primary/90 transition-transform active:scale-95"
                     onClick={() => {
                         setEditingHabit(null);
                         setIsDialogOpen(true);
                     }}
                 >
-                    <Plus className="h-4 w-4" /> New Habit
+                    <Plus className="h-5 w-5" /> New Habit
                 </Button>
             </div>
 
@@ -598,7 +606,7 @@ export default function Dashboard() {
 
             {/* Settings Dialog */}
             <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-                <DialogContent className="sm:max-w-[425px] max-h-[85vh] flex flex-col">
+                <DialogContent className="sm:max-w-[425px] max-h-[85vh] flex flex-col rounded-3xl bg-surface/90 backdrop-blur-xl border-white/10">
                     <DialogHeader>
                         <DialogTitle>Settings</DialogTitle>
                     </DialogHeader>

@@ -16,7 +16,19 @@
       "Bash(find:*)",
       "Bash(flutter pub get:*)",
       "Bash(flutter build:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(opencode --version:*)",
+      "Bash(bun:*)",
+      "WebFetch(domain:opencode.ai)",
+      "Bash(npx oh-my-opencode:*)",
+      "Bash(curl:*)",
+      "Bash(bash)",
+      "Bash(~/.bun/bin/bunx oh-my-opencode install:*)",
+      "Bash(export PATH=\"$HOME/.bun/bin:$PATH\")",
+      "Bash(bunx oh-my-opencode install --no-tui --claude=max --gemini=true)",
+      "Bash(bunx oh-my-opencode:*)",
+      "Bash(opencode auth login:*)"
     ]
   }
 }
