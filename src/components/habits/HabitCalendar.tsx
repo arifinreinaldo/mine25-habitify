@@ -151,13 +151,14 @@ function HabitCalendarComponent({ habits, completions }: HabitCalendarProps) {
         return !isFuture(startOfMonth(addMonths(currentMonth, 1)));
     }, [currentMonth]);
 
-    const getIntensityClass = (rate: number, isFutureDay: boolean) => {
+    const getIntensityClass = (rate: number, isFutureDay: boolean, scheduledCount: number) => {
         if (isFutureDay) return 'bg-muted/10';
-        if (rate === 0) return 'bg-muted/20';
-        if (rate < 0.34) return 'bg-primary/20';
-        if (rate < 0.67) return 'bg-primary/40';
-        if (rate < 1) return 'bg-primary/60';
-        return 'bg-primary ring-2 ring-success/50';
+        if (scheduledCount === 0) return 'bg-muted/10'; // No habits scheduled
+        if (rate === 0) return 'bg-red-500/30 dark:bg-red-400/20';
+        if (rate < 0.34) return 'bg-orange-500/40 dark:bg-orange-400/30';
+        if (rate < 0.67) return 'bg-yellow-500/50 dark:bg-yellow-400/40';
+        if (rate < 1) return 'bg-emerald-500/50 dark:bg-emerald-400/40';
+        return 'bg-emerald-500 dark:bg-emerald-400 text-white ring-2 ring-emerald-300/50';
     };
 
     const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -203,33 +204,37 @@ function HabitCalendarComponent({ habits, completions }: HabitCalendarProps) {
             </div>
 
             {/* Day grid */}
-            <div className="grid grid-cols-7 gap-1 sm:gap-2">
+            <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
                 {calendarDays.map((day) => (
                     <button
                         key={day.dateStr}
                         onClick={() => !day.isFuture && setSelectedDay(day)}
                         disabled={day.isFuture}
                         className={cn(
-                            'relative min-h-10 sm:min-h-12 p-1 sm:p-2 rounded-xl transition-all',
-                            'hover:ring-2 ring-primary/30',
+                            'relative min-h-14 sm:min-h-16 p-1.5 sm:p-2 rounded-xl transition-all flex flex-col items-center justify-start',
+                            'hover:ring-2 ring-primary/30 hover:scale-[1.02]',
                             'focus:outline-none focus:ring-2 focus:ring-primary/50',
-                            getIntensityClass(day.completionRate, day.isFuture),
+                            getIntensityClass(day.completionRate, day.isFuture, day.scheduledCount),
                             !day.isCurrentMonth && 'opacity-40',
                             day.isFuture && 'cursor-not-allowed opacity-30',
-                            day.isToday && 'ring-2 ring-primary'
+                            day.isToday && 'ring-2 ring-primary shadow-lg shadow-primary/20'
                         )}
                     >
                         <span
                             className={cn(
-                                'text-xs sm:text-sm font-medium',
-                                day.isToday && 'text-primary font-bold'
+                                'text-sm sm:text-base font-semibold',
+                                day.isToday && 'text-primary',
+                                day.completionRate === 1 && day.scheduledCount > 0 && !day.isFuture && 'text-white'
                             )}
                         >
                             {format(day.date, 'd')}
                         </span>
                         {!day.isFuture && day.scheduledCount > 0 && (
-                            <div className="absolute bottom-0.5 sm:bottom-1 left-1/2 -translate-x-1/2">
-                                <span className="text-[10px] sm:text-xs text-muted-foreground">
+                            <div className="mt-auto pb-0.5">
+                                <span className={cn(
+                                    'text-[10px] sm:text-xs font-medium',
+                                    day.completionRate === 1 ? 'text-white/90' : 'text-muted-foreground'
+                                )}>
                                     {day.completedCount}/{day.scheduledCount}
                                 </span>
                             </div>
@@ -239,26 +244,26 @@ function HabitCalendarComponent({ habits, completions }: HabitCalendarProps) {
             </div>
 
             {/* Legend */}
-            <div className="mt-4 pt-4 border-t border-white/10">
-                <div className="flex items-center justify-center gap-2 sm:gap-4 flex-wrap">
+            <div className="mt-6 pt-4 border-t border-white/10">
+                <div className="flex items-center justify-center gap-3 sm:gap-5 flex-wrap">
                     <div className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-muted/20" />
+                        <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-md bg-red-500/30 dark:bg-red-400/20" />
                         <span className="text-xs text-muted-foreground">0%</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-primary/20" />
+                        <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-md bg-orange-500/40 dark:bg-orange-400/30" />
                         <span className="text-xs text-muted-foreground">1-33%</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-primary/40" />
+                        <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-md bg-yellow-500/50 dark:bg-yellow-400/40" />
                         <span className="text-xs text-muted-foreground">34-66%</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-primary/60" />
+                        <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-md bg-emerald-500/50 dark:bg-emerald-400/40" />
                         <span className="text-xs text-muted-foreground">67-99%</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-primary ring-2 ring-success/50" />
+                        <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-md bg-emerald-500 dark:bg-emerald-400 ring-2 ring-emerald-300/50" />
                         <span className="text-xs text-muted-foreground">100%</span>
                     </div>
                 </div>

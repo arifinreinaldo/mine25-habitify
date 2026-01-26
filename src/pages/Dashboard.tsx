@@ -444,23 +444,25 @@ export default function Dashboard() {
 
             {/* Main Content */}
             <main className="container mx-auto px-4 py-8 space-y-8">
-                {/* Stats Overview */}
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 rounded-3xl bg-surface/40 backdrop-blur-md border border-white/10 shadow-sm relative overflow-hidden group">
-                        <div className="absolute inset-0 bg-primary/5 group-hover:bg-primary/10 transition-colors" />
-                        <div className="relative z-10">
-                            <div className="text-3xl font-bold text-primary">{todaysHabits.filter(h => completedIds.has(h.id)).length}/{todaysHabits.length}</div>
-                            <div className="text-xs text-muted-foreground uppercase font-semibold tracking-wider mt-1">Completed Today</div>
+                {/* Stats Overview - only show in list view */}
+                {viewMode === 'list' && (
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="p-4 rounded-3xl bg-surface/40 backdrop-blur-md border border-white/10 shadow-sm relative overflow-hidden group">
+                            <div className="absolute inset-0 bg-primary/5 group-hover:bg-primary/10 transition-colors" />
+                            <div className="relative z-10">
+                                <div className="text-3xl font-bold text-primary">{todaysHabits.filter(h => completedIds.has(h.id)).length}/{todaysHabits.length}</div>
+                                <div className="text-xs text-muted-foreground uppercase font-semibold tracking-wider mt-1">Completed Today</div>
+                            </div>
+                        </div>
+                        <div className="p-4 rounded-3xl bg-surface/40 backdrop-blur-md border border-white/10 shadow-sm relative overflow-hidden group">
+                            <div className="absolute inset-0 bg-success/5 group-hover:bg-success/10 transition-colors" />
+                            <div className="relative z-10">
+                                <div className="text-3xl font-bold text-success">{Math.round((todaysHabits.filter(h => completedIds.has(h.id)).length / (todaysHabits.length || 1)) * 100)}%</div>
+                                <div className="text-xs text-muted-foreground uppercase font-semibold tracking-wider mt-1">Completion Rate</div>
+                            </div>
                         </div>
                     </div>
-                    <div className="p-4 rounded-3xl bg-surface/40 backdrop-blur-md border border-white/10 shadow-sm relative overflow-hidden group">
-                        <div className="absolute inset-0 bg-success/5 group-hover:bg-success/10 transition-colors" />
-                        <div className="relative z-10">
-                            <div className="text-3xl font-bold text-success">{Math.round((todaysHabits.filter(h => completedIds.has(h.id)).length / (todaysHabits.length || 1)) * 100)}%</div>
-                            <div className="text-xs text-muted-foreground uppercase font-semibold tracking-wider mt-1">Completion Rate</div>
-                        </div>
-                    </div>
-                </div>
+                )}
 
                 {/* View Toggle Content */}
                 {viewMode === 'calendar' ? (
