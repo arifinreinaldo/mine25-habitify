@@ -85,12 +85,15 @@
 
 ---
 
-## Phase 3: Calendar & Streaks (Medium Priority) - PARTIAL
+## Phase 3: Calendar & Streaks (Medium Priority) - ✅ COMPLETED
 
-### 3.1 Calendar view component ❌ PENDING
-- Monthly grid showing completion status per day
-- Color intensity based on completion rate
-- Click day to see details
+### 3.1 Calendar view component ✅ COMPLETED
+- Monthly grid showing completion status per day → `HabitCalendar.tsx`
+- Color-coded intensity based on completion rate (red → orange → yellow → emerald)
+- Click day to see habit details in dialog
+- Toggle between list/calendar view in Dashboard header
+- Mobile-responsive design with touch-friendly cells
+- Month navigation (prev/next) with 1-year history limit
 
 ### 3.2 Streak calculation ✅ COMPLETED
 - Current streak counter → `lib/streaks.ts:calculateStreak()`
