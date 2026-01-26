@@ -28,7 +28,8 @@
       "Bash(export PATH=\"$HOME/.bun/bin:$PATH\")",
       "Bash(bunx oh-my-opencode install --no-tui --claude=max --gemini=true)",
       "Bash(bunx oh-my-opencode:*)",
-      "Bash(opencode auth login:*)"
+      "Bash(opencode auth login:*)",
+      "Bash(npm list:*)"
     ]
   }
 }

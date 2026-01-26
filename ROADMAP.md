@@ -1,5 +1,17 @@
 # Habitify Clone - Feature Roadmap
 
+## Progress Summary
+
+| Phase | Status | Description |
+|-------|--------|-------------|
+| Phase 1 | ✅ Complete | Core Habit Features |
+| Phase 2 | ✅ Complete | Measurable Habits & Progress |
+| Phase 3 | 🔶 Partial | Calendar (pending) / Streaks (done) |
+| Phase 4 | ❌ Pending | Reports & Analytics |
+| Phase 5 | ✅ Complete | Platform Features (PWA, Notifications, Widget, Themes) |
+
+---
+
 ## Feature Cross-Check: Current vs Desired
 
 ### Core Habit Features
@@ -19,9 +31,20 @@
 | Feature | Status | Notes |
 |---------|--------|-------|
 | List-style daily dashboard | ✅ Done | `Dashboard.tsx` groups by time_of_day |
+| Streak tracking | ✅ Done | `lib/streaks.ts` calculates current/best streaks, displayed in HabitCard |
 | Calendar view for streaks | ❌ Pending | Phase 3 |
 | Progress bar per habit | ✅ Done | Shows for measurable habits |
 | Reports/trends analytics | ❌ Pending | Phase 4 |
+
+### Platform & Notifications
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| PWA support (installable) | ✅ Done | `InstallPrompt.tsx`, `usePWAInstall.ts` |
+| Push notifications | ✅ Done | `NotificationPreferences.tsx`, `usePushNotifications.ts` |
+| Ntfy integration | ✅ Done | `NtfySettings.tsx` for self-hosted notifications |
+| Android widget support | ✅ Done | Deep link auth in `Dashboard.tsx` |
+| Dark/light mode | ✅ Done | `ModeToggle.tsx`, `theme-provider.tsx` |
 
 ---
 
@@ -62,17 +85,17 @@
 
 ---
 
-## Phase 3: Calendar & Streaks (Medium Priority) - PENDING
+## Phase 3: Calendar & Streaks (Medium Priority) - PARTIAL
 
-### 3.1 Calendar view component
+### 3.1 Calendar view component ❌ PENDING
 - Monthly grid showing completion status per day
 - Color intensity based on completion rate
 - Click day to see details
 
-### 3.2 Streak calculation
-- Current streak counter
-- Longest streak record
-- Visual streak indicator on habit cards
+### 3.2 Streak calculation ✅ COMPLETED
+- Current streak counter → `lib/streaks.ts:calculateStreak()`
+- Longest streak record → `bestStreak` field in StreakData
+- Visual streak indicator on habit cards → Flame icon with streak count in HabitCard
 
 ---
 
@@ -87,6 +110,29 @@
 - Total completions
 - Average completion rate
 - Best streak
+
+---
+
+## Phase 5: Platform Features ✅ COMPLETED
+
+### 5.1 PWA & Installation ✅
+- Service worker registration
+- Install prompt component (`InstallPrompt.tsx`)
+- Hook for install detection (`usePWAInstall.ts`)
+
+### 5.2 Notifications ✅
+- Web Push notifications (`usePushNotifications.ts`, `pushNotifications.ts`)
+- Notification preferences UI (`NotificationPreferences.tsx`)
+- Ntfy self-hosted notification support (`NtfySettings.tsx`)
+- Preference persistence (`useNotificationPreferences.ts`)
+
+### 5.3 Android Widget Integration ✅
+- Deep link authentication for native Android widget
+- Session token passing via `habitify://auth` URL scheme
+
+### 5.4 Theme Support ✅
+- Dark/light mode toggle (`ModeToggle.tsx`)
+- Theme provider with system preference detection (`theme-provider.tsx`)
 
 ---
 

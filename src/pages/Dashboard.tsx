@@ -3,6 +3,8 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../features/auth/AuthContext';
 import { HabitDialog } from '../components/habits/HabitDialog';
 import { HabitList } from '../components/habits/HabitList';
+import { HabitCalendar } from '../components/habits/HabitCalendar';
+import type { Completion } from '../types/habit';
 import { InstallPrompt } from '../components/InstallPrompt';
 import { NotificationPreferences } from '../components/NotificationPreferences';
 import { NtfySettings } from '../components/NtfySettings';
@@ -11,7 +13,7 @@ import { ModeToggle } from '../components/mode-toggle';
 import type { Habit, StreakData } from '../types/habit';
 import { calculateStreak } from '../lib/streaks';
 import { format, subDays } from 'date-fns';
-import { Loader2, LogOut, Plus, Settings, Edit, Trash2, Smartphone } from 'lucide-react';
+import { Loader2, LogOut, Plus, Settings, Edit, Trash2, Smartphone, Calendar, List } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
@@ -77,7 +79,9 @@ export default function Dashboard() {
     const [progressValues, setProgressValues] = useState<Record<string, number>>({});
     const [completionNotes, setCompletionNotes] = useState<Record<string, string>>({});
     const [streakData, setStreakData] = useState<Record<string, StreakData>>({});
+    const [allCompletions, setAllCompletions] = useState<Completion[]>([]);
     const [loading, setLoading] = useState(true);
+    const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
@@ -119,12 +123,13 @@ export default function Dashboard() {
             if (error) throw error;
 
             const habitsData: Habit[] = data?.habits || [];
-            const allCompletions: { habit_id: string; completed_at: string; value: number; notes: string }[] = data?.completions || [];
+            const completionsData: { habit_id: string; completed_at: string; value: number; notes: string; id: string; user_id: string; created_at: string }[] = data?.completions || [];
 
             setHabits(habitsData);
+            setAllCompletions(completionsData as Completion[]);
 
             // Filter today's completions from the full dataset
-            const todayCompletions = allCompletions.filter(c => c.completed_at === today);
+            const todayCompletions = completionsData.filter(c => c.completed_at === today);
             setCompletedIds(new Set(todayCompletions.map(c => c.habit_id)));
 
             // Build progress values and notes maps from today's data
@@ -139,7 +144,7 @@ export default function Dashboard() {
 
             // Group completion dates by habit_id for streak calculation
             const completionsByHabit: Record<string, string[]> = {};
-            allCompletions.forEach(c => {
+            completionsData.forEach(c => {
                 if (!completionsByHabit[c.habit_id]) {
                     completionsByHabit[c.habit_id] = [];
                 }
@@ -417,6 +422,15 @@ export default function Dashboard() {
                         <p className="text-sm text-muted">{format(new Date(), 'EEEE, MMMM do')}</p>
                     </div>
                     <div className="flex items-center gap-2">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setViewMode(viewMode === 'list' ? 'calendar' : 'list')}
+                            className="rounded-full"
+                            title={viewMode === 'list' ? 'Calendar view' : 'List view'}
+                        >
+                            {viewMode === 'list' ? <Calendar className="h-5 w-5" /> : <List className="h-5 w-5" />}
+                        </Button>
                         <ModeToggle />
                         <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(true)} className="rounded-full">
                             <Settings className="h-5 w-5" />
@@ -448,11 +462,15 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {/* Habit Sections */}
-                <div className="space-y-8">
-                    <HabitList
-                        title="🌅 Early Morning"
-                        habits={todaysHabits.filter(h => h.time_of_day === 'early_morning')}
+                {/* View Toggle Content */}
+                {viewMode === 'calendar' ? (
+                    <HabitCalendar habits={habits} completions={allCompletions} />
+                ) : (
+                    /* Habit Sections */
+                    <div className="space-y-8">
+                        <HabitList
+                            title="🌅 Early Morning"
+                            habits={todaysHabits.filter(h => h.time_of_day === 'early_morning')}
                         completedHabitIds={completedIdsArray}
                         progressValues={progressValues}
                         completionNotes={completionNotes}
@@ -581,7 +599,8 @@ export default function Dashboard() {
                             )}
                         </div>
                     )}
-                </div>
+                    </div>
+                )}
             </main>
 
             {/* Floating Action Button */}
