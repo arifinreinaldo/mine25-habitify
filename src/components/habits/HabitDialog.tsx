@@ -137,9 +137,9 @@ export const HabitDialog: React.FC<HabitDialogProps> = ({ open, onOpenChange, on
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px] rounded-3xl bg-surface/95 backdrop-blur-xl border-white/10">
+            <DialogContent className="sm:max-w-[425px] rounded-3xl bg-surface/80 backdrop-blur-2xl border-white/20 shadow-2xl overflow-hidden">
                 <DialogHeader className="flex-shrink-0">
-                    <DialogTitle>{habitToEdit ? 'Edit Habit' : 'Create New Habit'}</DialogTitle>
+                    <DialogTitle className="font-display text-xl">{habitToEdit ? 'Edit Habit' : 'Create New Habit'}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="grid gap-4 py-4 overflow-y-auto flex-1 min-h-0 pr-2">
                     <div className="grid gap-2">
@@ -171,11 +171,10 @@ export const HabitDialog: React.FC<HabitDialogProps> = ({ open, onOpenChange, on
                             <button
                                 type="button"
                                 onClick={() => setHabitType('boolean')}
-                                className={`flex-1 p-3 rounded-2xl border transition-all text-left ${
-                                    habitType === 'boolean'
+                                className={`flex-1 p-3 rounded-2xl border transition-all text-left ${habitType === 'boolean'
                                         ? 'border-primary bg-primary/10'
                                         : 'border-muted bg-surface/50 hover:bg-surface hover:border-muted-foreground/50'
-                                }`}
+                                    }`}
                             >
                                 <div className="font-medium text-sm">Yes/No</div>
                                 <div className="text-xs text-muted-foreground">Simple completion</div>
@@ -183,11 +182,10 @@ export const HabitDialog: React.FC<HabitDialogProps> = ({ open, onOpenChange, on
                             <button
                                 type="button"
                                 onClick={() => setHabitType('measurable')}
-                                className={`flex-1 p-3 rounded-2xl border transition-all text-left ${
-                                    habitType === 'measurable'
+                                className={`flex-1 p-3 rounded-2xl border transition-all text-left ${habitType === 'measurable'
                                         ? 'border-primary bg-primary/10'
                                         : 'border-muted bg-surface/50 hover:bg-surface hover:border-muted-foreground/50'
-                                }`}
+                                    }`}
                             >
                                 <div className="font-medium text-sm">Measurable</div>
                                 <div className="text-xs text-muted-foreground">Track progress</div>
@@ -213,11 +211,10 @@ export const HabitDialog: React.FC<HabitDialogProps> = ({ open, onOpenChange, on
                                     key={day.value}
                                     type="button"
                                     onClick={() => toggleDay(day.value)}
-                                    className={`flex-1 py-2 px-1 text-xs font-medium rounded-lg border transition-all ${
-                                        frequencyDays.includes(day.value)
+                                    className={`flex-1 py-2 px-1 text-xs font-medium rounded-lg border transition-all ${frequencyDays.includes(day.value)
                                             ? 'border-primary bg-primary/20 text-primary'
                                             : 'border-muted bg-surface/50 text-muted-foreground hover:bg-surface hover:border-muted-foreground/50'
-                                    }`}
+                                        }`}
                                 >
                                     {day.label}
                                 </button>
@@ -225,8 +222,8 @@ export const HabitDialog: React.FC<HabitDialogProps> = ({ open, onOpenChange, on
                         </div>
                         <p className="text-xs text-muted-foreground">
                             {frequencyDays.length === 7 ? 'Every day' :
-                             frequencyDays.length === 0 ? 'Select at least one day' :
-                             `${frequencyDays.length} days per week`}
+                                frequencyDays.length === 0 ? 'Select at least one day' :
+                                    `${frequencyDays.length} days per week`}
                         </p>
                     </div>
 
@@ -246,22 +243,20 @@ export const HabitDialog: React.FC<HabitDialogProps> = ({ open, onOpenChange, on
                                 <button
                                     type="button"
                                     onClick={() => setFrequencyType('daily')}
-                                    className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all ${
-                                        frequencyType === 'daily'
+                                    className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all ${frequencyType === 'daily'
                                             ? 'border-primary bg-primary/20 text-primary'
                                             : 'border-muted bg-surface/50 text-muted-foreground hover:bg-surface hover:border-muted-foreground/50'
-                                    }`}
+                                        }`}
                                 >
                                     Day
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setFrequencyType('weekly')}
-                                    className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all ${
-                                        frequencyType === 'weekly'
+                                    className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all ${frequencyType === 'weekly'
                                             ? 'border-primary bg-primary/20 text-primary'
                                             : 'border-muted bg-surface/50 text-muted-foreground hover:bg-surface hover:border-muted-foreground/50'
-                                    }`}
+                                        }`}
                                 >
                                     Week
                                 </button>
@@ -280,11 +275,10 @@ export const HabitDialog: React.FC<HabitDialogProps> = ({ open, onOpenChange, on
                                     key={option.value}
                                     type="button"
                                     onClick={() => setTimeOfDay(option.value)}
-                                    className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all ${
-                                        timeOfDay === option.value
+                                    className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all ${timeOfDay === option.value
                                             ? 'border-primary bg-primary/10 text-primary'
                                             : 'border-muted bg-surface/50 hover:bg-surface hover:border-muted-foreground/50'
-                                    }`}
+                                        }`}
                                 >
                                     <span className="text-xl mb-1">{option.emoji}</span>
                                     <span className="text-xs font-medium">{option.label}</span>

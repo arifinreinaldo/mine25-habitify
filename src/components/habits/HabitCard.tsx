@@ -54,9 +54,10 @@ const HabitCardComponent: React.FC<HabitCardProps> = ({
     return (
         <Card className={cn(
             "flex flex-col p-3 sm:p-4 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden rounded-3xl border border-white/10 shadow-sm",
-            isGoalMet 
-                ? "bg-primary/10 border-primary/20" 
-                : "bg-surface/60 backdrop-blur-md hover:bg-surface/80"
+            isGoalMet
+                ? "bg-primary/10 border-primary/20 shadow-lg shadow-primary/10"
+                : "bg-surface/60 backdrop-blur-md hover:bg-surface/80",
+            streak && streak.currentStreak > 0 && !isGoalMet && "border-warning/20 shadow-lg shadow-warning/5"
         )}>
             <div className="flex items-center gap-3 sm:gap-4">
                 {/* Icon */}
