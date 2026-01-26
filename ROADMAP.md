@@ -6,7 +6,7 @@
 |-------|--------|-------------|
 | Phase 1 | ✅ Complete | Core Habit Features |
 | Phase 2 | ✅ Complete | Measurable Habits & Progress |
-| Phase 3 | 🔶 Partial | Calendar (pending) / Streaks (done) |
+| Phase 3 | ✅ Complete | Calendar & Streaks |
 | Phase 4 | ❌ Pending | Reports & Analytics |
 | Phase 5 | ✅ Complete | Platform Features (PWA, Notifications, Widget, Themes) |
 
@@ -32,7 +32,7 @@
 |---------|--------|-------|
 | List-style daily dashboard | ✅ Done | `Dashboard.tsx` groups by time_of_day |
 | Streak tracking | ✅ Done | `lib/streaks.ts` calculates current/best streaks, displayed in HabitCard |
-| Calendar view for streaks | ❌ Pending | Phase 3 |
+| Calendar view for streaks | ✅ Done | `HabitCalendar.tsx` with color-coded completion history |
 | Progress bar per habit | ✅ Done | Shows for measurable habits |
 | Reports/trends analytics | ❌ Pending | Phase 4 |
 
