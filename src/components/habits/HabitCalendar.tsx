@@ -1,4 +1,5 @@
 import { useMemo, useState, memo } from 'react';
+import { motion } from 'framer-motion';
 import {
     format,
     startOfMonth,
@@ -164,7 +165,12 @@ function HabitCalendarComponent({ habits, completions }: HabitCalendarProps) {
     const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     return (
-        <div className="rounded-3xl bg-surface/60 backdrop-blur-md border border-white/10 p-4 sm:p-6">
+        <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4 }}
+            className="rounded-3xl bg-surface/60 backdrop-blur-md border border-white/10 p-4 sm:p-6"
+        >
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
                 <Button
@@ -176,9 +182,15 @@ function HabitCalendarComponent({ habits, completions }: HabitCalendarProps) {
                 >
                     <ChevronLeft className="h-5 w-5" />
                 </Button>
-                <h2 className="text-lg sm:text-xl font-semibold">
-                    {format(currentMonth, 'MMMM yyyy')}
-                </h2>
+                <div key={currentMonth.toISOString()} className="relative overflow-hidden">
+                    <motion.h2
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        className="text-lg sm:text-xl font-semibold font-display"
+                    >
+                        {format(currentMonth, 'MMMM yyyy')}
+                    </motion.h2>
+                </div>
                 <Button
                     variant="ghost"
                     size="icon"
@@ -205,14 +217,19 @@ function HabitCalendarComponent({ habits, completions }: HabitCalendarProps) {
 
             {/* Day grid */}
             <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
-                {calendarDays.map((day) => (
-                    <button
+                {calendarDays.map((day, index) => (
+                    <motion.button
                         key={day.dateStr}
+                        initial={{ opacity: 0, scale: 0.5 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: index * 0.01 }}
+                        whileHover={!day.isFuture ? { scale: 1.1, zIndex: 10 } : {}}
+                        whileTap={!day.isFuture ? { scale: 0.9 } : {}}
                         onClick={() => !day.isFuture && setSelectedDay(day)}
                         disabled={day.isFuture}
                         className={cn(
                             'relative min-h-14 sm:min-h-16 p-1.5 sm:p-2 rounded-xl transition-all flex flex-col items-center justify-start',
-                            'hover:ring-2 ring-primary/30 hover:scale-[1.02]',
+                            'hover:ring-2 ring-primary/30',
                             'focus:outline-none focus:ring-2 focus:ring-primary/50',
                             getIntensityClass(day.completionRate, day.isFuture, day.scheduledCount),
                             !day.isCurrentMonth && 'opacity-40',
@@ -239,7 +256,7 @@ function HabitCalendarComponent({ habits, completions }: HabitCalendarProps) {
                                 </span>
                             </div>
                         )}
-                    </button>
+                    </motion.button>
                 ))}
             </div>
 
@@ -329,7 +346,7 @@ function HabitCalendarComponent({ habits, completions }: HabitCalendarProps) {
                     )}
                 </DialogContent>
             </Dialog>
-        </div>
+        </motion.div>
     );
 }
 
