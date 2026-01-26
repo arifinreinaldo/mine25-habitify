@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { HabitCard } from './HabitCard';
 import type { Habit, StreakData } from '../../types/habit';
 
@@ -32,28 +33,42 @@ export const HabitList: React.FC<HabitListProps> = ({
     if (habits.length === 0) return null;
 
     return (
-        <div className="space-y-4">
-            <h2 className="text-xl font-bold bg-gradient-to-r from-text to-muted bg-clip-text text-transparent opacity-80 pl-1">
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-4"
+        >
+            <h2 className="text-xl font-bold font-display bg-gradient-to-r from-text to-muted bg-clip-text text-transparent opacity-80 pl-1">
                 {title}
             </h2>
             <div className="space-y-3">
-                {habits.map(habit => (
-                    <div key={habit.id} className="group">
-                        <HabitCard
-                            habit={habit}
-                            isCompleted={completedHabitIds.includes(habit.id)}
-                            currentValue={progressValues[habit.id] || 0}
-                            notes={completionNotes[habit.id] || ''}
-                            onToggle={onToggle}
-                            onUpdateProgress={onUpdateProgress}
-                            onUpdateNotes={onUpdateNotes}
-                            onDelete={onDelete}
-                            onEdit={onEdit}
-                            streak={streakData?.[habit.id]}
-                        />
-                    </div>
-                ))}
+                <AnimatePresence mode="popLayout">
+                    {habits.map(habit => (
+                        <motion.div
+                            key={habit.id}
+                            layout
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                            className="group"
+                        >
+                            <HabitCard
+                                habit={habit}
+                                isCompleted={completedHabitIds.includes(habit.id)}
+                                currentValue={progressValues[habit.id] || 0}
+                                notes={completionNotes[habit.id] || ''}
+                                onToggle={onToggle}
+                                onUpdateProgress={onUpdateProgress}
+                                onUpdateNotes={onUpdateNotes}
+                                onDelete={onDelete}
+                                onEdit={onEdit}
+                                streak={streakData?.[habit.id]}
+                            />
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
             </div>
-        </div>
+        </motion.div>
     );
 };

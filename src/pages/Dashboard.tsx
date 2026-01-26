@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../features/auth/AuthContext';
 import { HabitDialog } from '../components/habits/HabitDialog';
@@ -114,7 +115,7 @@ export default function Dashboard() {
         setLoading(true);
         try {
             const yearAgo = format(subDays(new Date(), 365), 'yyyy-MM-dd');
-            
+
             // Single RPC call to fetch both habits and completions
             const { data, error } = await supabase.rpc('get_dashboard_data', {
                 p_year_ago: yearAgo
@@ -413,14 +414,20 @@ export default function Dashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-background text-text pb-32">
+        <div className="min-h-screen bg-background text-text pb-32 bg-noise">
             {/* Header */}
             <header className="sticky top-0 z-10 border-b border-white/5 bg-background/80 backdrop-blur-xl">
                 <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Hello, {user?.email?.split('@')[0]}!</h1>
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="flex flex-col"
+                    >
+                        <h1 className="text-2xl font-bold font-display bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent animate-gradient-x">
+                            Hello, {user?.email?.split('@')[0]}!
+                        </h1>
                         <p className="text-sm text-muted">{format(new Date(), 'EEEE, MMMM do')}</p>
-                    </div>
+                    </motion.div>
                     <div className="flex items-center gap-2">
                         <Button
                             variant="ghost"
@@ -446,22 +453,29 @@ export default function Dashboard() {
             <main className="container mx-auto px-4 py-8 space-y-8">
                 {/* Stats Overview - only show in list view */}
                 {viewMode === 'list' && (
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 rounded-3xl bg-surface/40 backdrop-blur-md border border-white/10 shadow-sm relative overflow-hidden group">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="grid grid-cols-2 gap-4"
+                    >
+                        <div className="p-4 rounded-3xl bg-surface/40 backdrop-blur-md border border-white/10 shadow-sm relative overflow-hidden group hover:shadow-primary/20 transition-all duration-500">
                             <div className="absolute inset-0 bg-primary/5 group-hover:bg-primary/10 transition-colors" />
                             <div className="relative z-10">
-                                <div className="text-3xl font-bold text-primary">{todaysHabits.filter(h => completedIds.has(h.id)).length}/{todaysHabits.length}</div>
+                                <div className="text-3xl font-bold font-display text-primary">{todaysHabits.filter(h => completedIds.has(h.id)).length}/{todaysHabits.length}</div>
                                 <div className="text-xs text-muted-foreground uppercase font-semibold tracking-wider mt-1">Completed Today</div>
                             </div>
                         </div>
-                        <div className="p-4 rounded-3xl bg-surface/40 backdrop-blur-md border border-white/10 shadow-sm relative overflow-hidden group">
+                        <div className="p-4 rounded-3xl bg-surface/40 backdrop-blur-md border border-white/10 shadow-sm relative overflow-hidden group hover:shadow-success/20 transition-all duration-500">
                             <div className="absolute inset-0 bg-success/5 group-hover:bg-success/10 transition-colors" />
                             <div className="relative z-10">
-                                <div className="text-3xl font-bold text-success">{Math.round((todaysHabits.filter(h => completedIds.has(h.id)).length / (todaysHabits.length || 1)) * 100)}%</div>
+                                <div className="text-3xl font-bold font-display text-success w-fit">
+                                    {Math.round((todaysHabits.filter(h => completedIds.has(h.id)).length / (todaysHabits.length || 1)) * 100)}%
+                                </div>
                                 <div className="text-xs text-muted-foreground uppercase font-semibold tracking-wider mt-1">Completion Rate</div>
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
                 )}
 
                 {/* View Toggle Content */}
@@ -473,149 +487,167 @@ export default function Dashboard() {
                         <HabitList
                             title="🌅 Early Morning"
                             habits={todaysHabits.filter(h => h.time_of_day === 'early_morning')}
-                        completedHabitIds={completedIdsArray}
-                        progressValues={progressValues}
-                        completionNotes={completionNotes}
-                        onToggle={handleToggleHabit}
-                        onUpdateProgress={handleUpdateProgress}
-                        onUpdateNotes={handleUpdateNotes}
-                        onDelete={handleDeleteHabit}
-                        onEdit={handleEditHabit}
-                        streakData={streakData}
-                    />
+                            completedHabitIds={completedIdsArray}
+                            progressValues={progressValues}
+                            completionNotes={completionNotes}
+                            onToggle={handleToggleHabit}
+                            onUpdateProgress={handleUpdateProgress}
+                            onUpdateNotes={handleUpdateNotes}
+                            onDelete={handleDeleteHabit}
+                            onEdit={handleEditHabit}
+                            streakData={streakData}
+                        />
 
-                    <HabitList
-                        title="☀️ Morning"
-                        habits={todaysHabits.filter(h => h.time_of_day === 'morning')}
-                        completedHabitIds={completedIdsArray}
-                        progressValues={progressValues}
-                        completionNotes={completionNotes}
-                        onToggle={handleToggleHabit}
-                        onUpdateProgress={handleUpdateProgress}
-                        onUpdateNotes={handleUpdateNotes}
-                        onDelete={handleDeleteHabit}
-                        onEdit={handleEditHabit}
-                        streakData={streakData}
-                    />
+                        <HabitList
+                            title="☀️ Morning"
+                            habits={todaysHabits.filter(h => h.time_of_day === 'morning')}
+                            completedHabitIds={completedIdsArray}
+                            progressValues={progressValues}
+                            completionNotes={completionNotes}
+                            onToggle={handleToggleHabit}
+                            onUpdateProgress={handleUpdateProgress}
+                            onUpdateNotes={handleUpdateNotes}
+                            onDelete={handleDeleteHabit}
+                            onEdit={handleEditHabit}
+                            streakData={streakData}
+                        />
 
-                    <HabitList
-                        title="🌤️ Afternoon"
-                        habits={todaysHabits.filter(h => h.time_of_day === 'afternoon')}
-                        completedHabitIds={completedIdsArray}
-                        progressValues={progressValues}
-                        completionNotes={completionNotes}
-                        onToggle={handleToggleHabit}
-                        onUpdateProgress={handleUpdateProgress}
-                        onUpdateNotes={handleUpdateNotes}
-                        onDelete={handleDeleteHabit}
-                        onEdit={handleEditHabit}
-                        streakData={streakData}
-                    />
+                        <HabitList
+                            title="🌤️ Afternoon"
+                            habits={todaysHabits.filter(h => h.time_of_day === 'afternoon')}
+                            completedHabitIds={completedIdsArray}
+                            progressValues={progressValues}
+                            completionNotes={completionNotes}
+                            onToggle={handleToggleHabit}
+                            onUpdateProgress={handleUpdateProgress}
+                            onUpdateNotes={handleUpdateNotes}
+                            onDelete={handleDeleteHabit}
+                            onEdit={handleEditHabit}
+                            streakData={streakData}
+                        />
 
-                    <HabitList
-                        title="🌆 Evening"
-                        habits={todaysHabits.filter(h => h.time_of_day === 'evening')}
-                        completedHabitIds={completedIdsArray}
-                        progressValues={progressValues}
-                        completionNotes={completionNotes}
-                        onToggle={handleToggleHabit}
-                        onUpdateProgress={handleUpdateProgress}
-                        onUpdateNotes={handleUpdateNotes}
-                        onDelete={handleDeleteHabit}
-                        onEdit={handleEditHabit}
-                        streakData={streakData}
-                    />
+                        <HabitList
+                            title="🌆 Evening"
+                            habits={todaysHabits.filter(h => h.time_of_day === 'evening')}
+                            completedHabitIds={completedIdsArray}
+                            progressValues={progressValues}
+                            completionNotes={completionNotes}
+                            onToggle={handleToggleHabit}
+                            onUpdateProgress={handleUpdateProgress}
+                            onUpdateNotes={handleUpdateNotes}
+                            onDelete={handleDeleteHabit}
+                            onEdit={handleEditHabit}
+                            streakData={streakData}
+                        />
 
-                    <HabitList
-                        title="⏰ Custom"
-                        habits={todaysHabits.filter(h => h.time_of_day === 'custom')}
-                        completedHabitIds={completedIdsArray}
-                        progressValues={progressValues}
-                        completionNotes={completionNotes}
-                        onToggle={handleToggleHabit}
-                        onUpdateProgress={handleUpdateProgress}
-                        onUpdateNotes={handleUpdateNotes}
-                        onDelete={handleDeleteHabit}
-                        onEdit={handleEditHabit}
-                        streakData={streakData}
-                    />
+                        <HabitList
+                            title="⏰ Custom"
+                            habits={todaysHabits.filter(h => h.time_of_day === 'custom')}
+                            completedHabitIds={completedIdsArray}
+                            progressValues={progressValues}
+                            completionNotes={completionNotes}
+                            onToggle={handleToggleHabit}
+                            onUpdateProgress={handleUpdateProgress}
+                            onUpdateNotes={handleUpdateNotes}
+                            onDelete={handleDeleteHabit}
+                            onEdit={handleEditHabit}
+                            streakData={streakData}
+                        />
 
-                    <HabitList
-                        title="🚫 No Reminder"
-                        habits={todaysHabits.filter(h => h.time_of_day === 'anytime')}
-                        completedHabitIds={completedIdsArray}
-                        progressValues={progressValues}
-                        completionNotes={completionNotes}
-                        onToggle={handleToggleHabit}
-                        onUpdateProgress={handleUpdateProgress}
-                        onUpdateNotes={handleUpdateNotes}
-                        onDelete={handleDeleteHabit}
-                        onEdit={handleEditHabit}
-                        streakData={streakData}
-                    />
+                        <HabitList
+                            title="🚫 No Reminder"
+                            habits={todaysHabits.filter(h => h.time_of_day === 'anytime')}
+                            completedHabitIds={completedIdsArray}
+                            progressValues={progressValues}
+                            completionNotes={completionNotes}
+                            onToggle={handleToggleHabit}
+                            onUpdateProgress={handleUpdateProgress}
+                            onUpdateNotes={handleUpdateNotes}
+                            onDelete={handleDeleteHabit}
+                            onEdit={handleEditHabit}
+                            streakData={streakData}
+                        />
 
-                    {todaysHabits.length === 0 && (
-                        <div className="text-center py-10 text-muted">
-                            <p>{habits.length === 0 ? 'No habits yet. Start small!' : 'No habits scheduled for today!'}</p>
-                        </div>
-                    )}
-
-                    {/* Upcoming Habits (collapsible) */}
-                    {upcomingHabits.length > 0 && (
-                        <div className="pt-4 border-t border-muted/20">
-                            <button
-                                onClick={() => setShowUpcoming(!showUpcoming)}
-                                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-text transition-colors"
+                        {todaysHabits.length === 0 && (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="text-center py-20 text-muted flex flex-col items-center gap-4"
                             >
-                                <span className={`transition-transform ${showUpcoming ? 'rotate-90' : ''}`}>▶</span>
-                                <span>Upcoming ({upcomingHabits.length})</span>
-                            </button>
-                            {showUpcoming && (
-                                <div className="mt-4 opacity-60">
-                                    {upcomingHabits.map(habit => (
-                                        <div key={habit.id} className="py-2 px-3 rounded-2xl bg-surface/50 mb-2 flex items-center gap-3">
-                                            <span className="text-xl">{habit.icon}</span>
-                                            <div className="flex-1">
-                                                <div className="font-medium text-sm">{habit.name}</div>
-                                                <div className="text-xs text-muted-foreground">
-                                                    {habit.frequency_days?.map(d => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][Number(d)]).join(', ')}
+                                <div className="text-6xl animate-bounce-slow">🌱</div>
+                                <p className="text-lg font-medium">{habits.length === 0 ? 'No habits yet. Start small!' : 'No habits scheduled for today!'}</p>
+                            </motion.div>
+                        )}
+
+                        {/* Upcoming Habits (collapsible) */}
+                        {upcomingHabits.length > 0 && (
+                            <div className="pt-8 border-t border-white/5">
+                                <button
+                                    onClick={() => setShowUpcoming(!showUpcoming)}
+                                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-text transition-colors mb-4 group"
+                                >
+                                    <span className={`transition-transform duration-300 ${showUpcoming ? 'rotate-90' : ''} group-hover:text-primary`}>▶</span>
+                                    <span className="font-medium">Upcoming ({upcomingHabits.length})</span>
+                                </button>
+                                <AnimatePresence>
+                                    {showUpcoming && (
+                                        <motion.div
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: "auto", opacity: 0.6 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            transition={{ duration: 0.3 }}
+                                            className="overflow-hidden"
+                                        >
+                                            {upcomingHabits.map(habit => (
+                                                <div key={habit.id} className="py-2 px-3 rounded-2xl bg-surface/30 mb-2 flex items-center gap-3 border border-white/5">
+                                                    <span className="text-xl opacity-80">{habit.icon}</span>
+                                                    <div className="flex-1">
+                                                        <div className="font-medium text-sm">{habit.name}</div>
+                                                        <div className="text-xs text-muted-foreground">
+                                                            {habit.frequency_days?.map(d => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][Number(d)]).join(', ')}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex gap-1">
+                                                        <button
+                                                            onClick={() => handleEditHabit(habit)}
+                                                            className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
+                                                        >
+                                                            <Edit className="h-4 w-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteHabit(habit.id)}
+                                                            className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div className="flex gap-1">
-                                                <button
-                                                    onClick={() => handleEditHabit(habit)}
-                                                    className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
-                                                >
-                                                    <Edit className="h-4 w-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteHabit(habit.id)}
-                                                    className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    )}
+                                            ))}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        )}
                     </div>
                 )}
             </main>
 
             {/* Floating Action Button */}
             <div className="fixed bottom-8 right-6 z-50">
-                <Button
-                    className="gap-2 shadow-xl shadow-primary/25 rounded-full h-14 px-6 text-base font-semibold bg-primary hover:bg-primary/90 transition-transform active:scale-95"
-                    onClick={() => {
-                        setEditingHabit(null);
-                        setIsDialogOpen(true);
-                    }}
+                <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                 >
-                    <Plus className="h-5 w-5" /> New Habit
-                </Button>
+                    <Button
+                        className="gap-2 shadow-xl shadow-primary/25 rounded-full h-14 px-6 text-base font-semibold bg-primary hover:bg-primary/90 transition-all"
+                        onClick={() => {
+                            setEditingHabit(null);
+                            setIsDialogOpen(true);
+                        }}
+                    >
+                        <Plus className="h-5 w-5" /> New Habit
+                    </Button>
+                </motion.div>
             </div>
 
             <HabitDialog
@@ -629,7 +661,7 @@ export default function Dashboard() {
             <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
                 <DialogContent className="sm:max-w-[425px] max-h-[85vh] flex flex-col rounded-3xl bg-surface/90 backdrop-blur-xl border-white/10">
                     <DialogHeader>
-                        <DialogTitle>Settings</DialogTitle>
+                        <DialogTitle className="font-display text-xl">Settings</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4 overflow-y-auto flex-1">
                         <InstallPrompt />
