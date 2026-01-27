@@ -266,12 +266,14 @@ export const HabitDialog: React.FC<HabitDialogProps> = ({ open, onOpenChange, on
                     </div>
 
                     <div className="grid gap-3">
-                        <div className="flex items-start gap-3 p-3 rounded-2xl bg-primary/5 border border-primary/20">
-                            <Bell className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                            <div>
-                                <p className="font-medium text-sm">Reminder Time</p>
-                                <p className="text-xs text-muted-foreground mt-0.5">
-                                    Choose when to receive a reminder if this habit isn't completed
+                        <div className="flex items-start gap-3 p-4 rounded-2xl bg-primary/10 border-2 border-primary/30">
+                            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
+                                <Bell className="w-5 h-5 text-primary" />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="font-semibold text-base">Reminder Time</p>
+                                <p className="text-sm text-muted-foreground mt-0.5">
+                                    Get reminded if not completed
                                 </p>
                             </div>
                         </div>
