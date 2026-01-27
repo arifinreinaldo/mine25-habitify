@@ -74,17 +74,17 @@ const HabitCardComponent: React.FC<HabitCardProps> = ({
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                     <h3 className={cn(
-                        "font-bold text-base sm:text-lg transition-all truncate",
+                        "font-bold text-lg sm:text-xl transition-all truncate",
                         isGoalMet && "text-muted-foreground line-through"
                     )}>
                         {habit.name}
                     </h3>
                     {habit.description && (
-                        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1">
+                        <p className="text-sm text-muted-foreground line-clamp-1">
                             {habit.description}
                         </p>
                     )}
-                    <p className="text-xs text-muted-foreground capitalize mt-0.5">
+                    <p className="text-sm sm:text-xs text-muted-foreground capitalize mt-0.5">
                         {habit.time_of_day.replace('_', ' ')}
                         {isMeasurable && habit.unit && (
                             <> • {currentValue}/{target} {habit.unit}</>
