@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card } from '../ui/card';
 import { Checkbox } from '../ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import type { Habit, StreakData } from '../../types/habit';
 import { cn } from '../../lib/utils';
-import { Trash2, Edit, Minus, Plus, MessageSquare, Flame } from 'lucide-react';
+import { Trash2, Edit, Minus, Plus, MessageSquare, Flame, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 
@@ -35,6 +35,9 @@ const HabitCardComponent: React.FC<HabitCardProps> = ({
 }) => {
     const [localNotes, setLocalNotes] = useState(notes);
     const [isNotesOpen, setIsNotesOpen] = useState(false);
+    const [isDescExpanded, setIsDescExpanded] = useState(false);
+    const [isDescTruncated, setIsDescTruncated] = useState(false);
+    const descRef = useRef<HTMLParagraphElement>(null);
 
     const isMeasurable = habit.habit_type === 'measurable';
     const target = habit.frequency_target || 1;
@@ -46,10 +49,24 @@ const HabitCardComponent: React.FC<HabitCardProps> = ({
         setIsNotesOpen(false);
     };
 
-    // Sync local notes with prop when it changes
-    React.useEffect(() => {
+    // Sync local notes with prop when it changes or popover opens
+    useEffect(() => {
         setLocalNotes(notes);
     }, [notes]);
+
+    // Sync notes when popover opens
+    useEffect(() => {
+        if (isNotesOpen) {
+            setLocalNotes(notes);
+        }
+    }, [isNotesOpen, notes]);
+
+    // Check if description is truncated
+    useEffect(() => {
+        if (descRef.current && !isDescExpanded) {
+            setIsDescTruncated(descRef.current.scrollWidth > descRef.current.clientWidth);
+        }
+    }, [habit.description, isDescExpanded]);
 
     return (
         <Card className={cn(
@@ -88,9 +105,29 @@ const HabitCardComponent: React.FC<HabitCardProps> = ({
 
             {/* Row 2: Description */}
             {habit.description && (
-                <p className="text-sm text-muted-foreground truncate mt-1 pl-13">
-                    {habit.description}
-                </p>
+                <div className="mt-1 flex items-start gap-1">
+                    <p
+                        ref={descRef}
+                        className={cn(
+                            "text-sm text-muted-foreground flex-1",
+                            !isDescExpanded && "truncate"
+                        )}
+                    >
+                        {habit.description}
+                    </p>
+                    {(isDescTruncated || isDescExpanded) && (
+                        <button
+                            onClick={() => setIsDescExpanded(!isDescExpanded)}
+                            className="flex-shrink-0 text-xs text-primary hover:text-primary/80 flex items-center gap-0.5"
+                        >
+                            {isDescExpanded ? (
+                                <>less <ChevronUp className="h-3 w-3" /></>
+                            ) : (
+                                <>more <ChevronDown className="h-3 w-3" /></>
+                            )}
+                        </button>
+                    )}
+                </div>
             )}
 
             {/* Row 3: Actions */}
@@ -157,8 +194,14 @@ const HabitCardComponent: React.FC<HabitCardProps> = ({
                                             Add notes about your progress today
                                         </p>
                                     </div>
+                                    {notes && (
+                                        <div className="p-2 rounded-xl bg-primary/10 border border-primary/20">
+                                            <p className="text-xs text-muted-foreground mb-1">Current note:</p>
+                                            <p className="text-sm italic">"{notes}"</p>
+                                        </div>
+                                    )}
                                     <Input
-                                        placeholder="How did it go?"
+                                        placeholder={notes ? "Update your note..." : "How did it go?"}
                                         value={localNotes}
                                         onChange={(e) => setLocalNotes(e.target.value)}
                                         onKeyDown={(e) => {
@@ -167,18 +210,20 @@ const HabitCardComponent: React.FC<HabitCardProps> = ({
                                         className="bg-background/50 border-white/10 rounded-xl"
                                     />
                                     <div className="flex justify-end gap-2">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => {
-                                                setLocalNotes('');
-                                                onUpdateNotes(habit.id, '');
-                                                setIsNotesOpen(false);
-                                            }}
-                                            className="rounded-xl"
-                                        >
-                                            Clear
-                                        </Button>
+                                        {notes && (
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => {
+                                                    setLocalNotes('');
+                                                    onUpdateNotes(habit.id, '');
+                                                    setIsNotesOpen(false);
+                                                }}
+                                                className="rounded-xl text-destructive hover:text-destructive"
+                                            >
+                                                Delete
+                                            </Button>
+                                        )}
                                         <Button size="sm" onClick={handleSaveNotes} className="rounded-xl">
                                             Save
                                         </Button>
