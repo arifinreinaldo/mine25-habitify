@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { Bell } from 'lucide-react';
 import type { Habit, TimeOfDay, FrequencyType, HabitType } from '../../types/habit';
 
 interface HabitDialogProps {
@@ -264,11 +265,16 @@ export const HabitDialog: React.FC<HabitDialogProps> = ({ open, onOpenChange, on
                         </div>
                     </div>
 
-                    <div className="grid gap-2">
-                        <Label>Reminder Time</Label>
-                        <p className="text-xs text-muted-foreground mb-2">
-                            Get a passive-aggressive email reminder if you haven't completed this habit
-                        </p>
+                    <div className="grid gap-3">
+                        <div className="flex items-start gap-3 p-3 rounded-2xl bg-primary/5 border border-primary/20">
+                            <Bell className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                            <div>
+                                <p className="font-medium text-sm">Reminder Time</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                    Choose when to receive a reminder if this habit isn't completed
+                                </p>
+                            </div>
+                        </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                             {timeOptions.map((option) => (
                                 <button
